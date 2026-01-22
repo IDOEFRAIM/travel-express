@@ -8,6 +8,7 @@ export async function createUniversityAction(formData: FormData) {
  console.log("We start processing data")  
   const name = formData.get("name") as string;
   const city = formData.get("city") as string;
+  const country = formData.get("country") as string;
   const summary = formData.get("summary") as string;
   const description = formData.get("description") as string;
   const costRange = formData.get("costRange") as string;
@@ -124,6 +125,7 @@ console.log('yup we get em')
       data: {
         name,
         city,
+        country,
         summary,
         description,
         costRange,

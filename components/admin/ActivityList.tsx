@@ -24,16 +24,32 @@ const ICONS = {
     'DOC_REJECTED': XCircle
 };
 
+
+// Couleurs par type d'activité
+const TYPE_COLORS: Record<string, string> = {
+  'APP_NEW': 'bg-blue-500',
+  'APP_UPDATE': 'bg-blue-400',
+  'DOC_NEW': 'bg-purple-500',
+  'DOC_VERIFIED': 'bg-green-500',
+  'DOC_REJECTED': 'bg-red-500',
+};
+
 export function ActivityList({ initialActivities }: { initialActivities: ActivityItem[] }) {
   const [filter, setFilter] = useState<'ALL' | 'APP' | 'DOC'>('ALL');
   const [dateFilter, setDateFilter] = useState('');
 
-  const filteredItems = initialActivities.filter(item => {
+  // Ajoute une couleur par défaut selon le type si absente
+  const activitiesWithColor = initialActivities.map(item => ({
+    ...item,
+    color: item.color || TYPE_COLORS[item.type] || 'bg-slate-300',
+  }));
+
+  const filteredItems = activitiesWithColor.filter(item => {
     // Type Filter
     const matchType = 
        filter === 'ALL' ? true :
-       filter === 'APP' ? item.type.startsWith('APP') :
-       filter === 'DOC' ? item.type.startsWith('DOC') : true;
+       filter === 'APP' ? (item.type && item.type.startsWith('APP')) :
+       filter === 'DOC' ? (item.type && item.type.startsWith('DOC')) : true;
 
     if (!matchType) return false;
 
@@ -114,8 +130,8 @@ export function ActivityList({ initialActivities }: { initialActivities: Activit
                          <div className={`absolute -left-2.25 top-4 h-4.5 w-4.5 rounded-full border-4 border-white ${item.color} shadow-sm group-hover:scale-110 transition-transform`}></div>
                          
                          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100/50 hover:shadow-md transition-all duration-300 flex items-start gap-4">
-                            <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 ${item.color} bg-opacity-10`}>
-                               <Icon size={24} className={item.color.replace('bg-', 'text-')} />
+                            <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 ${item.color || 'bg-slate-300'} bg-opacity-10`}>
+                               <Icon size={24} className={(item.color ? item.color.replace('bg-', 'text-') : 'text-slate-400')} />
                             </div>
                             <div className="flex-1">
                                <div className="flex justify-between items-start">

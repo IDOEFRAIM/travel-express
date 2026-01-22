@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, Users, Globe, LogOut, FileText, ChevronLeft, ChevronRight, GraduationCap } from "lucide-react";
+import { LayoutGrid, Users, Globe, LogOut, FileText, ChevronLeft, ChevronRight, GraduationCap, Archive, ActivitySquare, CreditCard } from "lucide-react";
 import { logoutAction } from "@/actions/logout.action";
 import { cn } from "@/lib/utils";
 
@@ -16,11 +16,14 @@ interface AdminSidebarProps {
 }
 
 const MENU_ITEMS = [
-   { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutGrid },
-   { label: 'Etudiants', href: '/admin/students', icon: Users },
-   { label: 'Documents', href: '/admin/documents', icon: FileText },
-   { label: 'Universités', href: '/admin/universities', icon: GraduationCap },
-   { label: 'Ajouter Univ.', href: '/admin/universities/new', icon: Globe },
+  { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutGrid },
+  { label: 'Etudiants', href: '/admin/students', icon: Users },
+  { label: 'Documents', href: '/admin/documents', icon: FileText },
+  { label: 'Universités', href: '/admin/universities', icon: GraduationCap },
+  { label: 'Archive', href: '/admin/archive', icon: Archive },
+  { label: 'Activités', href: '/admin/activity', icon: ActivitySquare },
+  { label: 'Finances', href: '/admin/finances', icon: CreditCard },
+  { label: 'Ajouter Univ.', href: '/admin/universities/new', icon: Globe },
 ];
 
 export default function AdminSidebar({ user }: AdminSidebarProps) {

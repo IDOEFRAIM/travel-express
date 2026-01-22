@@ -13,7 +13,7 @@ export default function AdminActivityPage() {
   });
 
   if (isLoading) return <div>Chargement...</div>;
-  if (error) return <div>Erreur lors du chargement des activités.</div>;
+  if (error) return <div>Erreur lors du chargement des activités.Essayez de raffraichir,nous travaillons presentement sur ce probleme</div>;
 
   return (
     <main className="p-8 md:p-12 max-w-4xl mx-auto">

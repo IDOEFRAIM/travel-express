@@ -3,30 +3,21 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const applications = await prisma.application.findMany({
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            fullName: true,
-            phone: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        },
-        university: {
-          select: {
-            id: true,
-            name: true,
-            city: true,
-          },
-        },
-        documents: true,
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        phone: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      where: {
+        role: 'STUDENT',
       },
     });
-    return NextResponse.json({ students: applications });
+    return NextResponse.json({ users });
   } catch (error) {
-    return NextResponse.json({ error: "Erreur lors de la récupération des dossiers étudiants" }, { status: 500 });
+    return NextResponse.json({ error: "Erreur lors de la récupération des étudiants" }, { status: 500 });
   }
 }

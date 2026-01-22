@@ -7,7 +7,7 @@ import path from "path";
 import fs from "fs/promises";
 import { v4 as uuidv4 } from 'uuid';
 
-import { uploadFileToS3, ensureBucketExists } from "@/lib/storage";
+import { uploadFileToSupabase } from "@/lib/storage";
 
 export async function uploadDocumentAction(formData: FormData) {
   const userId = await authService.requireUser();
@@ -52,21 +52,19 @@ export async function uploadDocumentAction(formData: FormData) {
   const safeName = `${uuidv4()}${extension}`;
   
   try {
-     // Ensure bucket exists (helpful for localstack first run)
-     await ensureBucketExists();
-
-     // Upload to S3
-     await uploadFileToS3(file, safeName, file.type);
+     // Upload to Supabase Storage (bucket 'agence')
+     const filePath = `documents/${safeName}`;
+     await uploadFileToSupabase(file, filePath);
 
      // Create Database Entry
      await prisma.document.create({
-        data: {
-        applicationId,
-        type,
-        name: file.name, // Original name for display
-        url: safeName, // Store Key as URL for now
-        status: "PENDING",
-        }
+      data: {
+      applicationId,
+      type,
+      name: file.name, // Original name for display
+      url: filePath, // Stocke le chemin complet pour Supabase
+      status: "PENDING",
+      }
      });
 
   } catch (error) {

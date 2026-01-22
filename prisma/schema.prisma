@@ -1,3 +1,16 @@
+// Log des activités admin
+model ActivityLog {
+  id         String   @id @default(cuid())
+  adminId    String
+  action     String
+  targetType String?
+  targetId   String?
+  details    String?
+  createdAt  DateTime @default(now())
+
+  admin User @relation("AdminActivityLogs", fields: [adminId], references: [id])
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL") // <--- Obligatoire
@@ -7,7 +20,6 @@ generator client {
   provider = "prisma-client-js"
   // Dans Prisma 7, évite d'ajouter des previewFeatures sauf si nécessaire
 }
-        
 
 // Enums pour les statuts et rôles
 enum Role {
@@ -16,14 +28,14 @@ enum Role {
 }
 
 enum ApplicationStatus {
-  DRAFT           // Brouillon
-  SUBMITTED       // Soumis, en attente de l'agence
-  UNDER_REVIEW    // En cours de traitement par l'université
-  ACCEPTED        // Accepté par l'université
-  JW202_RECEIVED  // Formulaire Visa reçu
-  VISA_GRANTED    // Visa obtenu
-  FLIGHT_BOOKED   // Billet pris, prêt au départ
-  COMPLETED       // Arrivé et installé
+  DRAFT // Brouillon
+  SUBMITTED // Soumis, en attente de l'agence
+  UNDER_REVIEW // En cours de traitement par l'université
+  ACCEPTED // Accepté par l'université
+  JW202_RECEIVED // Formulaire Visa reçu
+  VISA_GRANTED // Visa obtenu
+  FLIGHT_BOOKED // Billet pris, prêt au départ
+  COMPLETED // Arrivé et installé
 }
 
 enum DocumentStatus {
@@ -49,7 +61,7 @@ enum PaymentStatus {
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
-  password  String   // Sera hashé
+  password  String // Sera hashé
   fullName  String?
   phone     String?
   role      Role     @default(STUDENT)
@@ -59,6 +71,7 @@ model User {
   // Relations
   applications Application[]
   payments     Payment[]
+  activityLogs ActivityLog[] @relation("AdminActivityLogs")
 }
 
 // Catalogue des Universités
@@ -66,65 +79,67 @@ model University {
   id          String   @id @default(cuid())
   name        String
   city        String
-  summary     String?  // Résumé court
+  country     String   @default("Chine") // Pays ou destination (ex: Chine, Espagne, Allemagne)
+  summary     String? // Résumé court
   description String?  @db.Text
-  costRange   String?  // Ex: "2000-5000 USD/an"
-  programs    String?  // Liste simple ou relation plus complexe si besoin
+  costRange   String? // Ex: "2000-5000 USD/an"
+  programs    String? // Liste simple ou relation plus complexe si besoin
   images      String[] // URLs des images (max 3)
-  imageUrl    String?  // URL principale de l'image
-  pdfUrl      String?  // Lien vers le PDF des conditions
+  imageUrl    String? // URL principale de l'image
+  pdfUrl      String? // Lien vers le PDF des conditions
   createdAt   DateTime @default(now())
 
   // Relations
   applications Application[]
+  payments     Payment[]
 }
 
 // Dossier de candidature d'un étudiant
 model Application {
-  id              String            @id @default(cuid())
-  userId          String
-  universityId    String
-  user            User              @relation(fields: [userId], references: [id])
-  university      University        @relation(fields: [universityId], references: [id])
-  
+  id           String     @id @default(cuid())
+  userId       String
+  universityId String
+  user         User       @relation(fields: [userId], references: [id])
+  university   University @relation(fields: [universityId], references: [id])
+
   desiredProgram  String?
   status          ApplicationStatus @default(DRAFT)
   progress        Int               @default(0) // Pour la barre de progression (0-100)
   rejectionReason String?           @db.Text
-  
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  documents       Document[]
+  documents Document[]
 }
 
 // Documents (Passeport, Diplômes, Visa...)
 model Document {
-  id            String         @id @default(cuid())
+  id            String      @id @default(cuid())
   applicationId String
-  application   Application    @relation(fields: [applicationId], references: [id])
-  
-  type          String         // Ex: "PASSPORT", "DIPLOMA", "PHOTO"
-  name          String
-  url           String         // Lien vers le fichier (Supabase Storage ou autre)
-  status        DocumentStatus @default(PENDING)
-  adminComment  String?        // Raison du rejet si rejeté
-  
-  createdAt     DateTime       @default(now())
+  application   Application @relation(fields: [applicationId], references: [id])
+
+  type         String // Ex: "PASSPORT", "DIPLOMA", "PHOTO"
+  name         String
+  url          String // Lien vers le fichier (Supabase Storage ou autre)
+  status       DocumentStatus @default(PENDING)
+  adminComment String? // Raison du rejet si rejeté
+
+  createdAt DateTime @default(now())
 }
 
 // Historique des paiements
 model Payment {
-  id        String        @id @default(cuid())
-  userId    String
-  user      User          @relation(fields: [userId], references: [id])
-  
-  amount    Float
-  currency  String        @default("XOF") // Franc CFA
-  method    PaymentMethod
-  status    PaymentStatus @default(PENDING)
-  reference String?       // ID de transaction Orange/Moov
-  
-  createdAt DateTime      @default(now())
+  id           String        @id @default(cuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id])
+  universityId String
+  university   University    @relation(fields: [universityId], references: [id])
+  amount       Float
+  currency     String        @default("XOF") // Franc CFA
+  method       PaymentMethod
+  status       PaymentStatus @default(PENDING)
+  reference    String? // ID de transaction Orange/Moov
+  createdAt    DateTime      @default(now())
 }

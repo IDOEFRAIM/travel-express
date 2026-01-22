@@ -39,43 +39,56 @@ export default function AdminUniversitiesPage() {
         ) : error ? (
           <div className="text-red-500">{error.message}</div>
         ) : (
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-blue-100">
-                <th className="py-3 px-4 text-left font-bold text-slate-700">Image</th>
-                <th className="py-3 px-4 text-left font-bold text-slate-700">Nom</th>
-                <th className="py-3 px-4 text-left font-bold text-slate-700">Ville</th>
-                <th className="py-3 px-4 text-left font-bold text-slate-700">Détails</th>
-                <th className="py-3 px-4 text-left font-bold text-slate-700">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {universities.map((u, idx) => {
-                const imgSrc = u.images && u.images.length > 0 ? u.images[0] : "/images/university-default.png";
-                return (
-                  <tr key={u.id} className={idx % 2 === 0 ? "bg-slate-50" : "bg-white"}>
-                    <td className="py-3 px-4">
-                      <img
-                        src={imgSrc}
-                        alt={u.name}
-                        className="w-16 h-16 object-cover rounded-xl border bg-slate-100"
-                        onError={e => { e.currentTarget.src = "/images/university-default.png"; }}
-                      />
-                    </td>
-                    <td className="py-3 px-4 font-medium text-slate-800">{u.name}</td>
-                    <td className="py-3 px-4 text-slate-600">{u.city}</td>
-                    <td className="py-3 px-4">
-                      <Link href={`/admin/universities/${u.id}`} className="text-blue-600 hover:underline font-semibold transition-colors">Voir</Link>
-                    </td>
-                    <td className="py-3 px-4">
-                      <Link href={`/admin/universities/${u.id}/edit`} className="mr-4 text-blue-600 hover:underline hover:text-blue-800 font-semibold transition-colors">Modifier</Link>
-                      <button onClick={() => handleDelete(u.id)} className="text-red-600 hover:text-red-800 font-semibold hover:underline transition-colors">Supprimer</button>
-                    </td>
+          // Regroupement par pays
+          Object.entries(
+            universities.reduce((acc, u) => {
+              const country = u.country || "Autre";
+              if (!acc[country]) acc[country] = [];
+              acc[country].push(u);
+              return acc;
+            }, {})
+          ).map(([country, unis]) => (
+            <div key={country} className="mb-10">
+              <h2 className="text-xl font-bold text-blue-700 mb-4 mt-8 uppercase tracking-wide">{country}</h2>
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-blue-100">
+                    <th className="py-3 px-4 text-left font-bold text-slate-700">Image</th>
+                    <th className="py-3 px-4 text-left font-bold text-slate-700">Nom</th>
+                    <th className="py-3 px-4 text-left font-bold text-slate-700">Ville</th>
+                    <th className="py-3 px-4 text-left font-bold text-slate-700">Détails</th>
+                    <th className="py-3 px-4 text-left font-bold text-slate-700">Actions</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                </thead>
+                <tbody>
+                  {unis.map((u, idx) => {
+                    const imgSrc = u.images && u.images.length > 0 ? u.images[0] : "/images/university-default.png";
+                    return (
+                      <tr key={u.id} className={idx % 2 === 0 ? "bg-slate-50" : "bg-white"}>
+                        <td className="py-3 px-4">
+                          <img
+                            src={imgSrc}
+                            alt={u.name}
+                            className="w-16 h-16 object-cover rounded-xl border bg-slate-100"
+                            onError={e => { e.currentTarget.src = "/images/university-default.png"; }}
+                          />
+                        </td>
+                        <td className="py-3 px-4 font-medium text-slate-800">{u.name}</td>
+                        <td className="py-3 px-4 text-slate-600">{u.city}</td>
+                        <td className="py-3 px-4">
+                          <Link href={`/admin/universities/${u.id}`} className="text-blue-600 hover:underline font-semibold transition-colors">Voir</Link>
+                        </td>
+                        <td className="py-3 px-4">
+                          <Link href={`/admin/universities/${u.id}/edit`} className="mr-4 text-blue-600 hover:underline hover:text-blue-800 font-semibold transition-colors">Modifier</Link>
+                          <button onClick={() => handleDelete(u.id)} className="text-red-600 hover:text-red-800 font-semibold hover:underline transition-colors">Supprimer</button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ))
         )}
       </div>
     </main>

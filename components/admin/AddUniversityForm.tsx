@@ -42,6 +42,24 @@ export default function AddUniversityForm() {
         <input name="city" required className="w-full border rounded px-3 py-2" />
       </div>
       <div>
+        <label className="block text-sm font-medium">Pays *</label>
+        <select name="country" required defaultValue="Chine" className="w-full border rounded px-3 py-2">
+          <option value="Chine">Chine</option>
+          <option value="France">France</option>
+          <option value="Canada">Canada</option>
+          <option value="Burkina">Burkina</option>
+          <option value="Espagne">Espagne</option>
+          <option value="Allemagne">Allemagne</option>
+          <option value="Maroc">Maroc</option>
+          <option value="Sénégal">Sénégal</option>
+          <option value="Autre">Autre</option>
+        </select>
+      </div>
+      <div>
+        <label className="block text-sm font-medium">Résumé court</label>
+        <input name="summary" className="w-full border rounded px-3 py-2" />
+      </div>
+      <div>
         <label className="block text-sm font-medium">Description</label>
         <textarea name="description" className="w-full border rounded px-3 py-2" />
       </div>
@@ -54,8 +72,17 @@ export default function AddUniversityForm() {
         <input name="programs" className="w-full border rounded px-3 py-2" />
       </div>
       <div>
-        <label className="block text-sm font-medium">Image (URL)</label>
+        <label className="block text-sm font-medium">Images (URLs, max 3)</label>
+        <input name="images" placeholder="Séparez les URLs par des virgules" className="w-full border rounded px-3 py-2" />
+        <span className="text-xs text-slate-400">Exemple: https://img1.jpg, https://img2.jpg, https://img3.jpg</span>
+      </div>
+      <div>
+        <label className="block text-sm font-medium">Image principale (URL)</label>
         <input name="imageUrl" className="w-full border rounded px-3 py-2" />
+      </div>
+      <div>
+        <label className="block text-sm font-medium">PDF des conditions</label>
+        <input name="pdf" type="file" accept="application/pdf" className="w-full border rounded px-3 py-2" />
       </div>
       <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded font-bold hover:bg-blue-700" disabled={loading}>
         {loading ? "Ajout..." : "Ajouter"}

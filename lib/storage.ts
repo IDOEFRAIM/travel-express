@@ -1,3 +1,9 @@
+import { supabase } from '@/lib/supabase';
+// Génère l'URL publique Supabase Storage pour un fichier
+export function getSupabasePublicUrl(filePath: string, bucket = "agence") {
+  const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  return `${baseUrl}/storage/v1/object/public/${bucket}/${filePath}`;
+}
 import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
@@ -17,51 +23,25 @@ export const s3Client = new S3Client({
   forcePathStyle: true, // Needed for LocalStack
 });
 
-export async function uploadFileToS3(file: File | Buffer, fileName: string, contentType: string) {
-  let buffer: Buffer;
-
-  if (file instanceof File) {
-    const arrayBuffer = await file.arrayBuffer();
-    buffer = Buffer.from(arrayBuffer);
-  } else {
-    buffer = file;
-  }
-
-  const command = new PutObjectCommand({
-    Bucket: S3_BUCKET,
-    Key: fileName,
-    Body: buffer,
-    ContentType: contentType,
+// Nouvelle fonction d'upload vers Supabase Storage
+export async function uploadFileToSupabase(file: File, filePath: string, bucket = "agence") {
+  const { data, error } = await supabase.storage.from(bucket).upload(filePath, file, {
+    cacheControl: '3600',
+    upsert: true,
   });
-
-  try {
-    await s3Client.send(command);
-    // Return the URL or Key for storing in the DB
-    // For local dev, we might construct a URL, but storing Key is better practice usually.
-    // Let's return the KEY and a helper to get the public URL.
-    return fileName;
-  } catch (error) {
-    console.error("Error uploading to S3:", error);
-    throw new Error("Failed to upload file to storage.");
+  if (error) {
+    console.error("Error uploading to Supabase Storage:", error);
+    throw new Error("Failed to upload file to Supabase Storage.");
   }
+  // Retourne le chemin relatif à stocker en base
+  return filePath;
 }
 
 export async function getFileUrl(fileKey: string) {
-   // Generate a signed URL for secure access
-   // Or just a public URL if bucket is public. Let's use signed URL for security simulation.
-   try {
-     const command = new GetObjectCommand({
-       Bucket: S3_BUCKET,
-       Key: fileKey,
-     });
-     
-     // Valid for 1 hour
-     const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); 
-     return url;
-   } catch (error) {
-     console.error("Error generating signed URL:", error);
-     return null;
-   }
+  // Si l'URL est déjà complète (http/https), retourne-la directement
+  if (fileKey.startsWith('http')) return fileKey;
+  // Sinon, retourne l'URL publique Supabase Storage
+  return getSupabasePublicUrl(fileKey);
 }
 
 // Helper to ensure bucket exists (useful for initialization/seeding)

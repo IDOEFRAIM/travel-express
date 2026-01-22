@@ -128,6 +128,9 @@ function ProfileSettings({ user }: { user: any }) {
     )
 }
 
+import dynamic from 'next/dynamic';
+const AddNewUniversity = dynamic(() => import('@/components/admin/AddNewUniversity'), { ssr: false });
+
 function UniversitySettings() {
     return (
         <div className="space-y-6">
@@ -138,7 +141,7 @@ function UniversitySettings() {
             <div className="h-px bg-slate-100" />
             <div>
                 {/* Formulaire dynamique d'ajout d'université */}
-                {require('@/components/admin/AddNewUniversity').default()}
+                <AddNewUniversity />
             </div>
         </div>
     )

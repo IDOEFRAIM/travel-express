@@ -44,19 +44,7 @@ export async function updateApplicationStatus(applicationId: string, newStatus: 
     include: { user: true, university: true }
   });
 
-  // Ajout d'une activité si terminé
-  if (newStatus === 'COMPLETED') {
-    await prisma.activity.create({
-      data: {
-        type: 'APP_COMPLETED',
-        title: 'Candidature terminée',
-        description: `Le dossier de ${updatedApp.user?.fullName || 'étudiant'} pour ${updatedApp.university?.name || ''} est terminé.`,
-        user: updatedApp.user?.fullName || '',
-        color: 'bg-green-700',
-        refId: applicationId
-      }
-    });
-  }
+  // (Suppressed) Ajout d'une activité si terminé
 
   revalidatePath('/admin/dashboard');
 }

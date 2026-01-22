@@ -8,45 +8,66 @@ import { getFileUrl } from "@/lib/storage";
 import { convertToXOF, formatCurrency } from "@/services/currency.service";
 
 export default async function ApplicationDetailsPage(props: { params: Promise<{ id: string }> }) {
-  const params = await props.params;
-  const applicationRaw = await applicationService.getApplicationById(params.id);
+   const params = await props.params;
+   const applicationRaw = await applicationService.getApplicationById(params.id);
 
-  if (!applicationRaw) {
-    redirect('/admin/students');
-  }
+   if (!applicationRaw) {
+      redirect('/admin/students');
+   }
 
-  // Resolve S3 URLs for documents
-  const documentsWithUrls = await Promise.all(applicationRaw.documents.map(async (doc) => {
-      let url = doc.url;
-      if (!doc.url.startsWith('/')) {
-        url = await getFileUrl(doc.url) || '#';
+   // Resolve S3 URLs for documents
+   const documentsWithUrls = await Promise.all(applicationRaw.documents.map(async (doc:any) => {
+         let url = doc.url;
+         if (!doc.url.startsWith('/')) {
+            url = await getFileUrl(doc.url) || '#';
+         }
+         return { ...doc, url };
+   }));
+
+   const application = { ...applicationRaw, documents: documentsWithUrls };
+
+   // Paiements liés à cette application
+   let payments = [];
+   let paymentsError: string | null = null;
+   const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+   const paymentsRes = await fetch(`${baseUrl}/api/admin/payments/by-application?applicationId=${application.id}`);
+   if (paymentsRes.ok) {
+      try {
+         const paymentsData = await paymentsRes.json();
+         payments = paymentsData.payments || [];
+      } catch (e) {
+         paymentsError = "Erreur de parsing JSON pour les paiements.";
+         console.error("Erreur de parsing JSON pour les paiements:", e);
       }
-      return { ...doc, url };
-  }));
-
-  const application = { ...applicationRaw, documents: documentsWithUrls };
-
-  // Paiements liés à cette application
-  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
-  const paymentsRes = await fetch(`${baseUrl}/api/admin/payments/by-application?applicationId=${application.id}`);
-  const paymentsData = await paymentsRes.json();
-  const payments = paymentsData.payments || [];
+   } else {
+      if (paymentsRes.status === 401) {
+         paymentsError = "Vous n'êtes pas authentifié pour voir ces paiements.";
+      } else {
+         const text = await paymentsRes.text();
+         paymentsError = `Erreur API paiements: ${paymentsRes.status}`;
+         console.error(`Erreur API paiements: ${paymentsRes.status} - ${text}`);
+      }
+   }
 
    // Calculs avec conversion en XOF
    const totalPayeXOF = payments.reduce(
-     (sum: number, p: { amount: string, currency: string }) =>
-       sum + convertToXOF(parseFloat(p.amount) || 0, (p.currency as "XOF" | "EUR" | "USD") || "XOF"),
-     0
+      (sum: number, p: { amount: string, currency: string }) =>
+         sum + convertToXOF(parseFloat(p.amount) || 0, (p.currency as "XOF" | "EUR" | "USD") || "XOF"),
+      0
    );
    // Récupère le costRange de l'université liée à l'application (supposé en XOF/FCFA)
    const costRangeXOF = application.university?.costRange ? parseFloat(application.university.costRange) : 0;
    const resteXOF = costRangeXOF > 0 ? costRangeXOF - totalPayeXOF : null;
 
-  return (
-    <main className="p-8 max-w-5xl mx-auto">
-       <Link href="/admin/students" className="text-slate-500 hover:text-slate-900 text-sm mb-6 inline-block font-medium">← Retour à la liste</Link>
-       
-       <header className="mb-8 flex justify-between items-start">
+   return (
+      <main className="p-8 max-w-5xl mx-auto">
+         <Link href="/admin/students" className="text-slate-500 hover:text-slate-900 text-sm mb-6 inline-block font-medium">← Retour à la liste</Link>
+         {paymentsError && (
+            <div className="mb-4 p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+               {paymentsError}
+            </div>
+         )}
+         <header className="mb-8 flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 mb-2">{application.user.fullName}</h1>
             <div className="flex items-center gap-4 text-slate-500">
@@ -118,7 +139,7 @@ export default async function ApplicationDetailsPage(props: { params: Promise<{ 
                </div>
              </div>
              <div className="space-y-3">
-                {application.documents.map((doc) => (
+                {application.documents.map((doc:any) => (
                    <div key={doc.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between group hover:border-blue-300 transition-colors">
                       <div className="flex items-center gap-4">
                          <div className="h-12 w-12 bg-slate-50 rounded-lg flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors">

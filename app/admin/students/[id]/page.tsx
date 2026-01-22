@@ -1,6 +1,7 @@
 "use client";
 import { useParams } from "next/navigation";
 import axios from "axios";
+import React from "react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Eye } from "lucide-react";
@@ -89,15 +90,14 @@ export default function StudentDetailPage() {
             }, {} as Record<string, number>);
             const costRange = app.university?.costRange ? parseFloat(app.university.costRange) : 0;
             // Conversion de tous les paiements en XOF
-            // Conversion de tous les paiements en XOF
             const totalPaidXOF = Object.entries(paymentsByCurrency).reduce(
               (sum, [cur, val]) => sum + convertToXOF(val as number, cur as "XOF" | "EUR" | "USD"),
               0
             );
             const resteXOF = costRange > 0 ? costRange - totalPaidXOF : null;
             return (
-              <>
-                <div key={app.id} className="bg-white rounded-2xl shadow border border-slate-100 p-6 flex flex-col md:flex-row md:items-center gap-6">
+              <React.Fragment key={app.id}>
+                <div className="bg-white rounded-2xl shadow border border-slate-100 p-6 flex flex-col md:flex-row md:items-center gap-6">
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-3 mb-2">
                         <span className="font-black text-lg text-slate-900 truncate max-w-xs">{app.university?.name || "-"}</span>
@@ -132,7 +132,7 @@ export default function StudentDetailPage() {
                     </Link>
                   </div>
                 </div>
-              </>
+              </React.Fragment>
             );
           })
         )}

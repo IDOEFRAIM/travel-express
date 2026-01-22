@@ -111,22 +111,32 @@ export default function AdminDashboardPage() {
                 <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100/50">
                       <h2 className="text-xl font-black text-slate-800 uppercase tracking-tighter mb-10">Recent Activities</h2>
                       <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:h-full before:w-0.5 before:bg-slate-100">
-                         {activitiesData?.map((activity) => (
-                            <div key={activity.id} className="relative flex items-start gap-8 group">
-                                <div className="flex items-center justify-center w-10 h-10 rounded-2xl border-4 border-white bg-white text-[#db9b16] shadow-xl shadow-slate-200 shrink-0 z-10">
-                                   <FileText size={18} />
+                         {activitiesData?.map((activity) => {
+                            // Icone dynamique selon le type d'activité
+                            let Icon = FileText;
+                            let iconColor = "text-[#db9b16]";
+                            if (activity.type?.startsWith("PAYMENT")) { Icon = Bell; iconColor = "text-yellow-500"; }
+                            if (activity.type === "APP_NEW" || activity.type === "APP_UPDATE") { Icon = Briefcase; iconColor = "text-blue-500"; }
+                            if (activity.type === "DOC_VERIFIED") { Icon = FileText; iconColor = "text-green-500"; }
+                            if (activity.type === "DOC_REJECTED") { Icon = FileText; iconColor = "text-red-500"; }
+                            if (activity.type === "PAYMENT_DELETE") { Icon = Bell; iconColor = "text-red-500"; }
+                            return (
+                              <div key={activity.id} className="relative flex items-start gap-8 group">
+                                <div className={`flex items-center justify-center w-10 h-10 rounded-2xl border-4 border-white bg-white ${iconColor} shadow-xl shadow-slate-200 shrink-0 z-10`}>
+                                   <Icon size={18} />
                                 </div>
                                 <div className="flex-1 bg-slate-50/50 p-5 rounded-[24px] border border-slate-100 group-hover:bg-white group-hover:border-[#db9b16]/20 transition-all">
                                    <div className="flex items-center justify-between mb-2">
-                                      <div className="font-black text-slate-800 text-xs uppercase">Document Validé</div>
+                                      <div className="font-black text-slate-800 text-xs uppercase">{activity.title}</div>
                                       <time className="text-[10px] font-black text-[#db9b16] uppercase">
-                                        {new Date(activity.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        {activity.date ? new Date(activity.date).toLocaleString() : ''}
                                       </time>
                                    </div>
-                                   <div className="text-slate-500 text-sm font-medium italic leading-relaxed">Le fichier "{activity.name}" a été validé pour le dossier #{activity.applicationId?.substring(0,8)}.</div>
+                                   <div className="text-slate-500 text-sm font-medium italic leading-relaxed">{activity.description}</div>
                                 </div>
-                            </div>
-                         ))}
+                              </div>
+                            );
+                         })}
                       </div>
                 </div>
              </div>

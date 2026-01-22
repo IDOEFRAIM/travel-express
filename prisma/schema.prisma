@@ -1,3 +1,14 @@
+// Timeline des activités (paiements, documents, candidatures...)
+model Activity {
+  id          String   @id @default(cuid())
+  type        String
+  title       String
+  description String
+  date        DateTime @default(now())
+  user        String
+  color       String
+  refId       String?
+}
 // Log des activités admin
 model ActivityLog {
   id         String   @id @default(cuid())

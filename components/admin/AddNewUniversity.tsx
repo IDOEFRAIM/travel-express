@@ -50,8 +50,14 @@ export default function AddNewUniversity() {
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-slate-100 py-12">
-      <div className="w-full max-w-xl bg-white rounded-3xl shadow-xl border border-slate-100 p-10">
-        <h1 className="text-3xl font-extrabold text-blue-700 mb-6 text-center tracking-tight">Nouvelle Université</h1>
+      <div className="w-full max-w-xl bg-white rounded-3xl shadow-xl border border-slate-100 p-10 relative">
+          <a href="/admin/universities" className="absolute left-6 top-6 flex items-center gap-2 text-blue-600 hover:text-blue-800 font-semibold text-base transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+            </svg>
+            Retour
+          </a>
+        <h1 className="text-3xl font-extrabold text-blue-700 mb-8 text-center tracking-tight">Nouvelle Université</h1>
         {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
         {success && <div className="text-green-500 text-sm mb-4">Université créée avec succès !</div>}
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -78,7 +84,7 @@ export default function AddNewUniversity() {
             </select>
           </div>
           <div>
-            <label className="block text-base font-bold text-slate-700 mb-1">Résumé (aperçu rapide)</label>
+            <label className="block text-base font-bold text-slate-700 mb-1">Résumé court</label>
             <input name="summary" maxLength={200} placeholder="Résumé court de la bourse ou université" className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:ring-2 focus:ring-blue-200 outline-none font-medium" />
           </div>
           <div>
@@ -86,12 +92,12 @@ export default function AddNewUniversity() {
             <textarea name="description" rows={4} className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:ring-2 focus:ring-blue-200 outline-none font-medium" />
           </div>
           <div>
-            <label className="block text-base font-bold text-slate-700 mb-1">Coût (ex: 2000-5000 USD/an)</label>
-            <input name="costRange" className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:ring-2 focus:ring-blue-200 outline-none font-medium" />
+            <label className="block text-base font-bold text-slate-700 mb-1">Coût (ex: 2000-5000 FCFA (XOF)/an)</label>
+            <input name="costRange" placeholder="Montant en FCFA (XOF)" className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:ring-2 focus:ring-blue-200 outline-none font-medium" />
           </div>
           <div>
             <label className="block text-base font-bold text-slate-700 mb-1">Programmes</label>
-            <input name="programs" className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:ring-2 focus:ring-blue-200 outline-none font-medium" />
+            <input name="programs" placeholder="Liste des programmes proposés" className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:ring-2 focus:ring-blue-200 outline-none font-medium" />
           </div>
           <div>
             <label className="block text-base font-bold text-slate-700 mb-1">Images (max 3, JPG/PNG/WEBP)</label>

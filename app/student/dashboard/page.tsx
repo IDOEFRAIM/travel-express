@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import ApplicationCard from '@/components/student/ApplicationCard';
+import { Flag } from 'lucide-react';
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { cookies } from "next/headers"
@@ -10,7 +12,7 @@ import { UploadDocumentButton } from "@/components/student/UploadDocumentButton"
 import { cn } from "@/lib/utils";
 
 async function getStudentData() {
-  const cookieStore = await cookies();
+ const cookieStore = await cookies();
   const userId = cookieStore.get('user_id')?.value;
 
   if (!userId) return null;
@@ -39,6 +41,7 @@ const TIMELINE_STEPS = [
     { id: 'FLIGHT_BOOKED', title: "Réservation Vol", desc: "Billet d'avion pris, préparatifs de départ." },
     { id: 'COMPLETED', title: "Arrivée en Chine", desc: "Installation, inscription finale et début des cours !" }
 ];
+
 
 export default async function StudentDashboard() {
    const student = await getStudentData();
@@ -93,35 +96,37 @@ export default async function StudentDashboard() {
                </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-               {student.applications.length > 0 ? (
-                  student.applications.map(app => (
-                     <div key={app.id} className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6 flex flex-col gap-4">
-                        <div className="flex items-center gap-3">
-                           <GraduationCap size={28} className="text-[#db9b16]" />
-                           <div>
-                              <div className="font-black text-lg text-slate-900">{app.university.name}</div>
-                              <div className="text-xs text-slate-500">{app.university.city}</div>
-                           </div>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                           <span className="text-xs font-bold uppercase text-[#db9b16]">Statut: {app.status}</span>
-                           <span className="text-xs text-slate-400">{app.documents.length} document(s)</span>
-                        </div>
-                        <Link href={`/student/dashboard/${app.id}`} className="mt-2 bg-[#db9b16] text-white font-bold py-2 px-4 rounded-xl hover:bg-[#b8860b] transition text-center">
-                           Voir le détail
-                        </Link>
-                     </div>
-                  ))
-               ) : (
-                  <div className="col-span-full text-center py-12 rounded-2xl border-2 border-dashed border-slate-100 bg-slate-50/50">
-                     <div className="mx-auto h-16 w-16 text-slate-200 mb-4">
-                        <GraduationCap size={64} strokeWidth={1} />
-                     </div>
-                     <p className="text-sm text-slate-400 font-bold uppercase tracking-widest">Aucune candidature trouvée</p>
+            {/* Grouper les candidatures par pays */}
+            {student.applications.length > 0 ? (
+              Object.entries(
+                student.applications.reduce((acc, app) => {
+                  const country = app.university.country || 'Autre';
+                  if (!acc[country]) acc[country] = [];
+                  acc[country].push(app);
+                  return acc;
+                }, {})
+              ).map(([country, apps]) => (
+                <section key={country} className="mb-12">
+                  <div className="flex items-center gap-3 mb-6">
+                    <Flag className="text-[#db9b16]" size={28} />
+                    <h2 className="text-2xl font-extrabold text-[#db9b16] tracking-tight uppercase drop-shadow-sm">{country}</h2>
+                    <span className="bg-[#db9b16]/10 text-[#db9b16] text-xs font-bold px-3 py-1 rounded-full ml-2">{apps.length} université{apps.length > 1 ? 's' : ''}</span>
                   </div>
-               )}
-            </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {apps.map(app => (
+                      <ApplicationCard key={app.id} app={app} />
+                    ))}
+                  </div>
+                </section>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12 rounded-2xl border-2 border-dashed border-slate-100 bg-slate-50/50">
+                <div className="mx-auto h-16 w-16 text-slate-200 mb-4">
+                  <GraduationCap size={64} strokeWidth={1} />
+                </div>
+                <p className="text-sm text-slate-400 font-bold uppercase tracking-widest">Aucune candidature trouvée</p>
+              </div>
+            )}
          </main>
       </div>
    );

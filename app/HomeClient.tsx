@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { MapPin, Heart, Star, GraduationCap, Zap, Globe, ShieldCheck } from "lucide-react";
+import { MapPin, Heart, Star, GraduationCap, Zap, Globe, ShieldCheck, Flag } from "lucide-react";
 import { ApplyButton } from "@/components/catalog/ApplyButton";
 import { Button } from "@/components/ui/Button";
 import { SearchBar } from "@/components/catalog/SearchBar";
@@ -256,51 +256,86 @@ export default function HomeClient({ universities, isConnected }: HomeClientProp
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="p-10 rounded-[2.5rem] bg-white border border-slate-100 transition-all duration-500 hover:-translate-y-4 hover:border-[#db9b16] hover:shadow-2xl hover:shadow-[#db9b16]/10 group cursor-default">
-              <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-[#db9b16]/10 transition-colors duration-500">
-                <Star className="w-6 h-6 text-slate-300 group-hover:text-[#db9b16] transition-colors" />
-              </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-4">Sélection Rigoureuse</h3>
-              <p className="text-slate-500 leading-relaxed font-medium">
-                Nous ne prenons pas tout le monde. Nous investissons notre temps sur les étudiants qui ont la faim de réussir.
-              </p>
-            </div>
 
-            <div className="p-10 rounded-[2.5rem] bg-white border border-slate-100 transition-all duration-500 hover:-translate-y-4 hover:border-[#db9b16] hover:shadow-2xl hover:shadow-[#db9b16]/10 group cursor-default">
-              <div className="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-purple-100 transition-colors duration-500">
-                <Heart className="w-6 h-6 text-purple-500" />
+          {/* Classement par pays */}
+          {Object.entries(
+            universities.reduce((acc, uni) => {
+              const country = uni.country || 'Autre';
+              if (!acc[country]) acc[country] = [];
+              acc[country].push(uni);
+              return acc;
+            }, {})
+          ).map(([country, unis]) => (
+            <section key={country} className="mb-16">
+              <div className="flex items-center gap-3 mb-6">
+                <Flag className="text-[#db9b16]" size={28} />
+                <h2 className="text-2xl font-extrabold text-[#db9b16] tracking-tight uppercase drop-shadow-sm">{country}</h2>
+                <span className="bg-[#db9b16]/10 text-[#db9b16] text-xs font-bold px-3 py-1 rounded-full ml-2">{unis.length} université{unis.length > 1 ? 's' : ''}</span>
               </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-4">Accompagnement 360°</h3>
-              <p className="text-slate-500 leading-relaxed font-medium">
-                Nous sommes votre famille loin de chez vous. De l'aéroport de départ jusqu'à votre premier cours à Pékin.
-              </p>
-            </div>
+              {/* Classement par pays */}
+              {Object.entries(
+                universities.reduce((acc, uni) => {
+                  const country = uni.country || 'Autre';
+                  if (!acc[country]) acc[country] = [];
+                  acc[country].push(uni);
+                  return acc;
+                }, {})
+              ).map(([country, unis]) => (
+                <section key={country} className="mb-16">
+                  <div className="flex items-center gap-3 mb-6">
+                    <Flag className="text-[#db9b16]" size={28} />
+                    <h2 className="text-2xl font-extrabold text-[#db9b16] tracking-tight uppercase drop-shadow-sm">{country}</h2>
+                    <span className="bg-[#db9b16]/10 text-[#db9b16] text-xs font-bold px-3 py-1 rounded-full ml-2">{unis.length} université{unis.length > 1 ? 's' : ''}</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {unis.map((uni: University) => (
+                      <div 
+                        key={uni.id} 
+                        className="group bg-white rounded-3xl border border-slate-100 overflow-hidden hover:shadow-2xl hover:shadow-[#db9b16]/10 transition-all duration-500 hover:-translate-y-2"
+                      >
+                        <div className="relative h-64 overflow-hidden">
+                          <img 
+                            src={uni.image || "https://images.unsplash.com/photo-1541339907198-e08756defeec?auto=format&fit=crop&w=800&q=80"} 
+                            alt={uni.name}
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                          />
+                          <div className="absolute top-4 right-4">
+                            <button className="p-2 rounded-full bg-white/90 backdrop-blur-md text-slate-400 hover:text-red-500 transition-colors shadow-sm">
+                              <Heart className="w-5 h-5" />
+                            </button>
+                          </div>
+                          <div className="absolute bottom-4 left-4">
+                            <span className="px-3 py-1 rounded-full bg-[#db9b16] text-white text-xs font-bold uppercase tracking-wider">
+                              {uni.category || "Premium"}
+                            </span>
+                          </div>
+                        </div>
 
-            <div className="p-10 rounded-[2.5rem] bg-white border border-slate-100 transition-all duration-500 hover:-translate-y-4 hover:border-[#db9b16] hover:shadow-2xl hover:shadow-[#db9b16]/10 group cursor-default">
-              <div className="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-green-100 transition-colors duration-500">
-                <MapPin className="w-6 h-6 text-green-500" />
-              </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-4">Réseau Puissant</h3>
-              <p className="text-slate-500 leading-relaxed font-medium">
-                Accédez à notre réseau d'anciens élèves et d'entrepreneurs en Chine, France et Allemagne. Votre opportunité commence maintenant.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+                        <div className="p-6">
+                          <div className="flex items-center gap-1 text-yellow-500 mb-3">
+                            <Star className="w-4 h-4 fill-current" />
+                            <span className="text-sm font-bold text-slate-900">{uni.rating || "4.8"}</span>
+                          </div>
+                    
+                          <h3 className="text-xl font-bold text-slate-900 group-hover:text-[#db9b16] transition-colors mb-2">
+                            {uni.name}
+                          </h3>
+                          <div className="flex items-center gap-2 text-slate-500 mb-6">
+                            <MapPin className="w-4 h-4" />
+                            <span className="text-sm">{uni.location}</span>
+                          </div>
 
-      {/* 🚀 SECTION 5 : INNOVATION */}
-      <section className="bg-slate-50 py-24 px-6 relative overflow-hidden">
-        <div className="container mx-auto">
-          <div className="text-center max-w-3xl mx-auto mb-20">
-            <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 leading-tight">
-              L'innovation au service de votre avenir.
-            </h2>
-            <p className="text-lg text-slate-500 font-medium">
-              Nous avons digitalisé tout le processus pour que vous puissiez vous concentrer sur ce qui compte : vos études.
-            </p>
-          </div>
+                          <div className="flex items-center justify-between pt-6 border-t border-slate-50">
+                            <ApplyButton isConnected={isConnected} universityId={uni.id.toString()} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </section>
+          ))}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="p-10 rounded-[2.5rem] bg-white border border-slate-100 transition-all duration-500 hover:-translate-y-4 hover:border-[#db9b16] hover:shadow-2xl hover:shadow-[#db9b16]/10 group cursor-default">

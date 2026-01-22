@@ -21,7 +21,7 @@ async function requireAdmin() {
 // Action pour changer le statut d'un dossier
 export async function updateApplicationStatus(applicationId: string, newStatus: ApplicationStatus) {
   await requireAdmin();
-  
+
   // Logique métier : mettre à jour la progression en % selon le statut
   let progress = 0;
   switch (newStatus) {
@@ -35,13 +35,28 @@ export async function updateApplicationStatus(applicationId: string, newStatus: 
     case 'COMPLETED': progress = 100; break;
   }
 
-  await prisma.application.update({
+  const updatedApp = await prisma.application.update({
     where: { id: applicationId },
     data: { 
       status: newStatus,
       progress: progress 
-    }
+    },
+    include: { user: true, university: true }
   });
+
+  // Ajout d'une activité si terminé
+  if (newStatus === 'COMPLETED') {
+    await prisma.activity.create({
+      data: {
+        type: 'APP_COMPLETED',
+        title: 'Candidature terminée',
+        description: `Le dossier de ${updatedApp.user?.fullName || 'étudiant'} pour ${updatedApp.university?.name || ''} est terminé.`,
+        user: updatedApp.user?.fullName || '',
+        color: 'bg-green-700',
+        refId: applicationId
+      }
+    });
+  }
 
   revalidatePath('/admin/dashboard');
 }

@@ -5,6 +5,7 @@ import { FileText, User as UserIcon, MapPin, Calendar, Download } from "lucide-r
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getFileUrl } from "@/lib/storage";
+import { convertToXOF, formatCurrency } from "@/services/currency.service";
 
 export default async function ApplicationDetailsPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -24,6 +25,22 @@ export default async function ApplicationDetailsPage(props: { params: Promise<{ 
   }));
 
   const application = { ...applicationRaw, documents: documentsWithUrls };
+
+  // Paiements liés à cette application
+  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+  const paymentsRes = await fetch(`${baseUrl}/api/admin/payments/by-application?applicationId=${application.id}`);
+  const paymentsData = await paymentsRes.json();
+  const payments = paymentsData.payments || [];
+
+   // Calculs avec conversion en XOF
+   const totalPayeXOF = payments.reduce(
+     (sum: number, p: { amount: string, currency: string }) =>
+       sum + convertToXOF(parseFloat(p.amount) || 0, (p.currency as "XOF" | "EUR" | "USD") || "XOF"),
+     0
+   );
+   // Récupère le costRange de l'université liée à l'application (supposé en XOF/FCFA)
+   const costRangeXOF = application.university?.costRange ? parseFloat(application.university.costRange) : 0;
+   const resteXOF = costRangeXOF > 0 ? costRangeXOF - totalPayeXOF : null;
 
   return (
     <main className="p-8 max-w-5xl mx-auto">
@@ -65,6 +82,24 @@ export default async function ApplicationDetailsPage(props: { params: Promise<{ 
                       <MapPin size={14}/> {application.university.city}
                    </div>
                 </div>
+                        {/* Paiements avec conversion multi-devise */}
+                        <div className="pt-4 border-t border-slate-100">
+                           <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Paiements</label>
+                           <div className="font-medium text-slate-800">
+                              Total payé : {totalPayeXOF} FCFA (XOF)
+                              {payments.length > 0 && (
+                                 <span className="block text-xs text-slate-500 mt-1">
+                                    ({payments.map((p: any) => `${p.amount} ${p.currency}`).join(" + ")})
+                                 </span>
+                              )}
+                           </div>
+                           {costRangeXOF > 0 && (
+                              <div className="text-slate-700">Montant attendu : {costRangeXOF} FCFA (XOF)</div>
+                           )}
+                           {resteXOF !== null && (
+                              <div>Reste à payer : <span className={resteXOF > 0 ? 'text-red-500' : 'text-green-600'}>{resteXOF} FCFA (XOF)</span></div>
+                           )}
+                        </div>
              </div>
           </div>
 
@@ -74,7 +109,14 @@ export default async function ApplicationDetailsPage(props: { params: Promise<{ 
                 <FileText className="text-blue-500"/>
                 Pièces justificatives ({application.documents.length})
              </h2>
-             
+             {/* Affichage intuitif du payeur */}
+             <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-100 flex items-center gap-6">
+               <UserIcon size={32} className="text-blue-500" />
+               <div>
+                 <div className="font-bold text-blue-700 text-lg">{application.user.fullName}</div>
+                 <div className="text-slate-700 text-sm">{application.user.phone || 'Téléphone non renseigné'}</div>
+               </div>
+             </div>
              <div className="space-y-3">
                 {application.documents.map((doc) => (
                    <div key={doc.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between group hover:border-blue-300 transition-colors">
@@ -87,21 +129,17 @@ export default async function ApplicationDetailsPage(props: { params: Promise<{ 
                             <div className="text-xs text-slate-400 uppercase font-bold tracking-wide mt-0.5">{doc.type} • {new Date(doc.createdAt).toLocaleDateString()}</div>
                          </div>
                       </div>
-
                       <div className="flex items-center gap-4">
                          {/* View Link */}
                          <Link href={doc.url} target="_blank" className="p-2 text-slate-400 hover:text-blue-600 hover:bg-slate-50 rounded-full transition-colors" title="Télécharger / Voir">
                             <Download size={20} />
                          </Link>
-                         
                          <div className="w-px h-8 bg-slate-100 mx-2"></div>
-                         
                          {/* Actions Component */}
                          <DocumentActions id={doc.id} currentStatus={doc.status} />
                       </div>
                    </div>
                 ))}
-
                 {application.documents.length === 0 && (
                    <div className="p-12 border-2 border-dashed border-slate-200 rounded-xl text-center text-slate-400">
                       Aucun document reçu pour le moment.

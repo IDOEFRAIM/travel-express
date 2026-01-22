@@ -5,37 +5,41 @@ import { Bell, FileText, CheckCircle, UserPlus, FileCheck, XCircle, ArrowUpCircl
 import { Button } from "@/components/ui/Button";
 
 export type ActivityItem = {
-  id: string;
-  type: 'APP_NEW' | 'APP_UPDATE' | 'DOC_NEW' | 'DOC_VERIFIED' | 'DOC_REJECTED';
-  title: string;
-  description: string;
-  date: Date;
-  user: string;
-  icon?: any;
-  color: string;
+   id: string;
+   type: 'APP_NEW' | 'APP_UPDATE' | 'DOC_NEW' | 'DOC_VERIFIED' | 'DOC_REJECTED' | 'PAYMENT_NEW' | 'PAYMENT_UPDATE';
+   title: string;
+   description: string;
+   date: Date;
+   user: string;
+   icon?: any;
+   color: string;
 };
 
 // Map types back to icons since functions/components cant be passed from server easily
 const ICONS = {
-    'APP_NEW': UserPlus,
-    'APP_UPDATE': ArrowUpCircle,
-    'DOC_NEW': FileText,
-    'DOC_VERIFIED': FileCheck,
-    'DOC_REJECTED': XCircle
+   'APP_NEW': UserPlus,
+   'APP_UPDATE': ArrowUpCircle,
+   'DOC_NEW': FileText,
+   'DOC_VERIFIED': FileCheck,
+   'DOC_REJECTED': XCircle,
+   'PAYMENT_NEW': CheckCircle,
+   'PAYMENT_UPDATE': ArrowUpCircle
 };
 
 
 // Couleurs par type d'activité
 const TYPE_COLORS: Record<string, string> = {
-  'APP_NEW': 'bg-blue-500',
-  'APP_UPDATE': 'bg-blue-400',
-  'DOC_NEW': 'bg-purple-500',
-  'DOC_VERIFIED': 'bg-green-500',
-  'DOC_REJECTED': 'bg-red-500',
+   'APP_NEW': 'bg-blue-500',
+   'APP_UPDATE': 'bg-blue-400',
+   'DOC_NEW': 'bg-purple-500',
+   'DOC_VERIFIED': 'bg-green-500',
+   'DOC_REJECTED': 'bg-red-500',
+   'PAYMENT_NEW': 'bg-yellow-500',
+   'PAYMENT_UPDATE': 'bg-yellow-400',
 };
 
 export function ActivityList({ initialActivities }: { initialActivities: ActivityItem[] }) {
-  const [filter, setFilter] = useState<'ALL' | 'APP' | 'DOC'>('ALL');
+   const [filter, setFilter] = useState<'ALL' | 'APP' | 'DOC' | 'PAYMENT'>('ALL');
   const [dateFilter, setDateFilter] = useState('');
 
   // Ajoute une couleur par défaut selon le type si absente
@@ -49,7 +53,8 @@ export function ActivityList({ initialActivities }: { initialActivities: Activit
     const matchType = 
        filter === 'ALL' ? true :
        filter === 'APP' ? (item.type && item.type.startsWith('APP')) :
-       filter === 'DOC' ? (item.type && item.type.startsWith('DOC')) : true;
+       filter === 'DOC' ? (item.type && item.type.startsWith('DOC')) :
+       filter === 'PAYMENT' ? (item.type && item.type.startsWith('PAYMENT')) : true;
 
     if (!matchType) return false;
 
@@ -76,22 +81,28 @@ export function ActivityList({ initialActivities }: { initialActivities: Activit
             {/* FILTER TABS */}
             <div className="flex gap-2 bg-slate-100 p-1 rounded-xl w-fit">
             <button 
-                onClick={() => setFilter('ALL')}
-                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filter === 'ALL' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+               onClick={() => setFilter('ALL')}
+               className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filter === 'ALL' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
             >
-                Tout
+               Tout
             </button>
             <button 
-                onClick={() => setFilter('APP')}
-                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filter === 'APP' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+               onClick={() => setFilter('APP')}
+               className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filter === 'APP' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
             >
-                Dossiers
+               Dossiers
             </button>
             <button 
-                onClick={() => setFilter('DOC')}
-                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filter === 'DOC' ? 'bg-white text-purple-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+               onClick={() => setFilter('DOC')}
+               className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filter === 'DOC' ? 'bg-white text-purple-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
             >
-                Documents
+               Documents
+            </button>
+            <button 
+               onClick={() => setFilter('PAYMENT')}
+               className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filter === 'PAYMENT' ? 'bg-white text-yellow-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            >
+               Paiements
             </button>
             </div>
 

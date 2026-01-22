@@ -5,14 +5,16 @@ import { applicationService } from "@/services/application.service";
 import Link from "next/link";
 import { Eye, FileText, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { DeleteApplicationButton } from "@/components/admin/DeleteApplicationButton";
+// import { DeleteStudentButton } from "@/components/admin/DeleteStudentButton";
+import { DeleteStudentButton } from "@/components/admin/DeleteStudentButton";
 
 export default function AdminStudentsPage() {
   const { data: students = [], isLoading, error } = useQuery({
     queryKey: ["adminStudents"],
     queryFn: async () => {
       const res = await axios.get("/api/admin/students");
-      return res.data.students || [];
+      // Correction : la clé de retour de l'API est 'users', pas 'students'
+      return res.data.users || [];
     }
   });
 
@@ -64,7 +66,11 @@ export default function AdminStudentsPage() {
                         {(app.fullName || app.email || "?").substring(0,2).toUpperCase()}
                      </div>
                      <div>
-                        <div className="font-bold text-slate-800">{app.fullName || app.email || "Étudiant"}</div>
+                        <div className="font-bold text-slate-800">
+                          <Link href={`/admin/students/${app.id}`} className="hover:underline">
+                            {app.fullName || app.email || "Étudiant"}
+                          </Link>
+                        </div>
                         <div className="text-slate-400 text-xs font-medium">{app.email || "-"}</div>
                      </div>
                   </div>
@@ -86,12 +92,12 @@ export default function AdminStudentsPage() {
                 </td>
                 <td className="py-4 px-6 text-right">
                    <div className="flex items-center justify-end gap-2">
-                     <Link href={`/admin/applications/${app.id}`}>
+                     <Link href={`/admin/students/${app.id}`}>
                         <Button variant="ghost" size="sm" className="h-9 w-9 p-0 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50">
                            <Eye size={18} />
                         </Button>
                      </Link>
-                     <DeleteApplicationButton applicationId={app.id} studentName={app.fullName || app.email || "Étudiant"} />
+                     <DeleteStudentButton studentId={app.id} studentName={app.fullName || app.email || "Étudiant"} />
                    </div>
                 </td>
               </tr>

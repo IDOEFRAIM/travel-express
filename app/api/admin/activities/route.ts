@@ -2,8 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  // Récupère les 15 dernières activités (documents et candidatures)
-  const [docs, apps] = await Promise.all([
+  // Récupère les 15 dernières activités (documents, candidatures, paiements...)
+  const [docs, apps, timeline] = await Promise.all([
     prisma.document.findMany({
       orderBy: { createdAt: "desc" },
       take: 10,
@@ -15,6 +15,10 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
       take: 5,
       include: { user: true, university: true }
+    }),
+    prisma.activity.findMany({
+      orderBy: { date: "desc" },
+      take: 15
     })
   ]);
 
@@ -54,8 +58,20 @@ export async function GET() {
     color: app.status === "SUBMITTED" ? "bg-blue-500" : "bg-blue-400",
   }));
 
+  // Mappe les activités de la timeline (paiements, suppressions...)
+  const timelineActivities = timeline.map(act => ({
+    id: act.id,
+    type: act.type,
+    title: act.title,
+    description: act.description,
+    date: act.date,
+    user: act.user,
+    color: act.color,
+    refId: act.refId,
+  }));
+
   // Fusionne et trie toutes les activités par date décroissante
-  const activities = [...docActivities, ...appActivities].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const activities = [...docActivities, ...appActivities, ...timelineActivities].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return NextResponse.json({ activities });
 }

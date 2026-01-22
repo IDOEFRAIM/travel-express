@@ -54,6 +54,18 @@ export default async function UniversityDetailPage({ params }: PageProps) {
                 className="object-cover w-full h-full"
               />
             </div>
+          ) : university.images && university.images.length > 0 ? (
+            <div className="relative h-72 w-full max-w-md overflow-hidden rounded-xl shadow-lg border-2 border-blue-100 flex items-center justify-center">
+              <img 
+                src={
+                  university.images[0].startsWith('http')
+                    ? university.images[0]
+                    : getSupabasePublicUrl(university.images[0])
+                }
+                alt={university.name}
+                className="object-cover w-full h-full"
+              />
+            </div>
           ) : (
             <div className="h-72 w-full max-w-md bg-gray-100 flex items-center justify-center rounded-xl border-2 border-dashed border-gray-300">
               <p className="text-gray-400">Aucune image disponible</p>

@@ -41,7 +41,8 @@ export default async function ApplicationDetailsPage(props: { params: Promise<{ 
       }
    } else {
       if (paymentsRes.status === 401) {
-         paymentsError = "Vous n'êtes pas authentifié pour voir ces paiements.";
+         console.log("Non authentifié pour voir les paiements."); 
+        // paymentsError = "Vous n'êtes pas authentifié pour voir ces paiements.";
       } else {
          const text = await paymentsRes.text();
          paymentsError = `Erreur API paiements: ${paymentsRes.status}`;

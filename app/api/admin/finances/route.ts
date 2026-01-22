@@ -13,7 +13,7 @@ export async function GET() {
   return NextResponse.json({ finances });
 }
 
-export async function POST(req) {
+export async function POST(req:any) {
   try {
     const body = await req.json();
     const { userId, universityId, amount, currency, method, reference } = body;

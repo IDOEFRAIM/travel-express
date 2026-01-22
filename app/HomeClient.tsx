@@ -76,7 +76,7 @@ export default function HomeClient({ universities, isConnected }: HomeClientProp
             {/* Blobs animés par le scroll */}
             <div 
               ref={goldBlobRef} 
-              className="absolute left-1/2 top-0 w-[600px] h-[300px] bg-[#db9b16]/20 rounded-full blur-[100px]" 
+              className="absolute left-1/2 top-0 w-150 h-75 bg-[#db9b16]/20 rounded-full blur-[100px]"
               style={{ zIndex: 1, transform: 'translateX(-50%)' }} // Initial state
             />
             <div ref={pinkBlobRef} className="absolute right-0 top-20 w-80 h-80 bg-pink-400/10 rounded-full blur-3xl" />
@@ -141,7 +141,6 @@ export default function HomeClient({ universities, isConnected }: HomeClientProp
             <img src="/images/logo.png" alt="Travel Express Logo" className="h-14 w-auto mb-2" />
             <p className="text-slate-500 mt-2 font-medium">{universities.length} établissements disponibles</p>
           </div>
-          <CategoryFilters />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -225,13 +224,13 @@ export default function HomeClient({ universities, isConnected }: HomeClientProp
               </p>
             </div>
 
-            <Button variant="default" size="lg" className="rounded-full bg-[#db9b16] hover:bg-[#b88212] text-white shadow-lg shadow-[#db9b16]/20">
+            <Button variant="glow" size="lg" className="rounded-full bg-[#db9b16] hover:bg-[#b88212] text-white shadow-lg shadow-[#db9b16]/20">
               Rejoindre l'élite chinoise
             </Button>
           </div>
 
           <div className="relative group flex justify-center lg:justify-end">
-            <div className="absolute -inset-1 bg-gradient-to-tr from-[#db9b16] to-[#020617] rounded-[2.5rem] blur opacity-20 transition duration-1000 group-hover:opacity-40"></div>
+            <div className="absolute -inset-1 bg-linear-to-tr from-[#db9b16] to-[#020617] rounded-4xl blur opacity-20 transition duration-1000 group-hover:opacity-40"></div>
             <div className="relative bg-[#0f172a] rounded-[2.5rem] w-full max-w-md aspect-square flex items-center justify-center border border-white/10 overflow-hidden shadow-2xl">
               <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1541339907198-e08756defeec?q=80&w=800')] bg-cover bg-center opacity-10 grayscale" />
               <div className="relative z-10 bg-white/5 backdrop-blur-xl border border-white/10 p-10 rounded-3xl text-center">
@@ -261,10 +260,9 @@ export default function HomeClient({ universities, isConnected }: HomeClientProp
           {Object.entries(
             universities.reduce((acc, uni) => {
               const country = uni.country || 'Autre';
-              if (!acc[country]) acc[country] = [];
-              acc[country].push(uni);
+              (acc[country] = acc[country] || []).push(uni);
               return acc;
-            }, {})
+            }, {} as Record<string, University[]>)
           ).map(([country, unis]) => (
             <section key={country} className="mb-16">
               <div className="flex items-center gap-3 mb-6">
@@ -272,68 +270,28 @@ export default function HomeClient({ universities, isConnected }: HomeClientProp
                 <h2 className="text-2xl font-extrabold text-[#db9b16] tracking-tight uppercase drop-shadow-sm">{country}</h2>
                 <span className="bg-[#db9b16]/10 text-[#db9b16] text-xs font-bold px-3 py-1 rounded-full ml-2">{unis.length} université{unis.length > 1 ? 's' : ''}</span>
               </div>
-              {/* Classement par pays */}
-              {Object.entries(
-                universities.reduce((acc, uni) => {
-                  const country = uni.country || 'Autre';
-                  if (!acc[country]) acc[country] = [];
-                  acc[country].push(uni);
-                  return acc;
-                }, {})
-              ).map(([country, unis]) => (
-                <section key={country} className="mb-16">
-                  <div className="flex items-center gap-3 mb-6">
-                    <Flag className="text-[#db9b16]" size={28} />
-                    <h2 className="text-2xl font-extrabold text-[#db9b16] tracking-tight uppercase drop-shadow-sm">{country}</h2>
-                    <span className="bg-[#db9b16]/10 text-[#db9b16] text-xs font-bold px-3 py-1 rounded-full ml-2">{unis.length} université{unis.length > 1 ? 's' : ''}</span>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {unis.map((uni: University) => (
-                      <div 
-                        key={uni.id} 
-                        className="group bg-white rounded-3xl border border-slate-100 overflow-hidden hover:shadow-2xl hover:shadow-[#db9b16]/10 transition-all duration-500 hover:-translate-y-2"
-                      >
-                        <div className="relative h-64 overflow-hidden">
-                          <img 
-                            src={uni.image || "https://images.unsplash.com/photo-1541339907198-e08756defeec?auto=format&fit=crop&w=800&q=80"} 
-                            alt={uni.name}
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                          />
-                          <div className="absolute top-4 right-4">
-                            <button className="p-2 rounded-full bg-white/90 backdrop-blur-md text-slate-400 hover:text-red-500 transition-colors shadow-sm">
-                              <Heart className="w-5 h-5" />
-                            </button>
-                          </div>
-                          <div className="absolute bottom-4 left-4">
-                            <span className="px-3 py-1 rounded-full bg-[#db9b16] text-white text-xs font-bold uppercase tracking-wider">
-                              {uni.category || "Premium"}
-                            </span>
-                          </div>
+              {/* Catalogue groupé par pays, format simple */}
+              <section className="mb-12">
+                <h2 className="text-2xl font-extrabold text-[#db9b16] tracking-tight uppercase mb-4">{country}</h2>
+                <ul className="space-y-2">
+                  {unis.map((uni: University) => (
+                    <li key={uni.id} className="bg-white rounded-xl border border-slate-100 p-4 flex flex-col md:flex-row md:items-center md:gap-6 shadow-sm">
+                      <div className="flex-1">
+                        <div className="font-bold text-lg text-slate-900">{uni.name}</div>
+                        <div className="text-xs text-slate-500 mb-1">{uni.location}</div>
+                        <div className="flex items-center gap-2 text-yellow-500 mb-1">
+                          <Star className="w-4 h-4 fill-current" />
+                          <span className="text-sm font-bold text-slate-900">{uni.rating || "4.8"}</span>
                         </div>
-
-                        <div className="p-6">
-                          <div className="flex items-center gap-1 text-yellow-500 mb-3">
-                            <Star className="w-4 h-4 fill-current" />
-                            <span className="text-sm font-bold text-slate-900">{uni.rating || "4.8"}</span>
-                          </div>
-                    
-                          <h3 className="text-xl font-bold text-slate-900 group-hover:text-[#db9b16] transition-colors mb-2">
-                            {uni.name}
-                          </h3>
-                          <div className="flex items-center gap-2 text-slate-500 mb-6">
-                            <MapPin className="w-4 h-4" />
-                            <span className="text-sm">{uni.location}</span>
-                          </div>
-
-                          <div className="flex items-center justify-between pt-6 border-t border-slate-50">
-                            <ApplyButton isConnected={isConnected} universityId={uni.id.toString()} />
-                          </div>
-                        </div>
+                        <span className="inline-block px-2 py-0.5 rounded bg-[#db9b16]/10 text-[#db9b16] text-xs font-bold uppercase tracking-wider mr-2">{uni.category || "Premium"}</span>
                       </div>
-                    ))}
-                  </div>
-                </section>
-              ))}
+                      <div className="mt-2 md:mt-0">
+                        <ApplyButton isConnected={isConnected} universityId={uni.id.toString()} />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
             </section>
           ))}
 

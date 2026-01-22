@@ -5,7 +5,36 @@ import { GraduationCap } from "lucide-react";
 
 const DescriptionWithExpand = dynamic(() => import("@/components/student/DescriptionWithExpand"), { ssr: false });
 
-export default function ApplicationCard({ app }) {
+interface University {
+  id: string;
+  name: string;
+  city: string;
+  country: string;
+  description?: string | null;
+  createdAt?: Date;
+  summary?: string | null;
+  costRange?: string | null;
+  programs?: string | null;
+  images?: string[];
+  imageUrl?: string | null;
+  pdfUrl?: string | null;
+}
+
+interface Document {
+  id: string;
+  name: string;
+  url: string;
+  status: string;
+}
+
+interface Application {
+  id: string;
+  status: string;
+  university: University;
+  documents: Document[];
+}
+
+export default function ApplicationCard({ app }: { app: Application }) {
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6 flex flex-col gap-4">
       <div className="flex items-center gap-3">

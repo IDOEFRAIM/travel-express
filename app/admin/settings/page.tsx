@@ -1,6 +1,4 @@
 "use client";
-import {prisma} from "@/lib/prisma";
-import { authService } from "@/services/auth.service";
 import { SettingsView } from "@/components/admin/SettingsView";
 import axios from "axios";
 import { useQuery } from "@tanstack/react-query";

@@ -34,7 +34,7 @@ export default function AddPaymentForm() {
   // Filtrage intelligent des utilisateurs (mémorisé pour la performance)
   const filteredUsers = useMemo(() => {
     if (!userSearch) return [];
-    return users.filter(u =>
+    return users.filter((u:any)=>
       u.fullName?.toLowerCase().includes(userSearch.toLowerCase())
     ).slice(0, 8); // On limite à 8 résultats pour la clarté
   }, [users, userSearch]);
@@ -63,7 +63,7 @@ export default function AddPaymentForm() {
     onError: () => setError("Erreur lors de l'enregistrement du paiement.")
   });
 
-  const handleSelectUser = (user) => {
+  const handleSelectUser = (user:any) => {
     setForm(f => ({ ...f, userId: user.id }));
     setUserSearch(user.fullName); // Affiche le nom sélectionné dans l'input
     setShowUserResults(false);
@@ -106,7 +106,7 @@ export default function AddPaymentForm() {
         {showUserResults && userSearch.length > 1 && (
           <div className="absolute top-full left-0 w-full bg-white border border-slate-200 rounded-lg shadow-xl z-50 mt-1 overflow-hidden">
             {filteredUsers.length > 0 ? (
-              filteredUsers.map(u => (
+              filteredUsers.map((u:any) => (
                 <div
                   key={u.id}
                   className="p-3 hover:bg-slate-50 cursor-pointer border-b border-slate-50 last:border-none flex flex-col"
@@ -133,7 +133,7 @@ export default function AddPaymentForm() {
       <div className="flex flex-col gap-2">
         <label className="font-semibold text-slate-700">Université *</label>
         <div className="max-h-40 overflow-y-auto border border-slate-200 rounded-lg bg-slate-50 p-2">
-          {universities.map(u => (
+          {universities.map((u:any) => (
             <label key={u.id} className={`flex items-center gap-2 p-2 rounded cursor-pointer transition ${form.universityId === u.id ? 'bg-[#db9b16]/10 border border-[#db9b16]/20' : 'hover:bg-white'}`}>
               <input
                 type="radio"

@@ -138,7 +138,7 @@ function UniversitySettings() {
             <div className="h-px bg-slate-100" />
             <div>
                 {/* Formulaire dynamique d'ajout d'université */}
-                {require('@/components/admin/AddUniversityForm').default()}
+                {require('@/components/admin/AddNewUniversity').default()}
             </div>
         </div>
     )

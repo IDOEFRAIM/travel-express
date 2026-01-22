@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/Input";
 import { uploadDocumentAction } from "@/actions/document.actions";
 import { X, UploadCloud, FileText, Check } from 'lucide-react';
 
-export function UploadDocumentButton({ applicationId }: { applicationId: string }) {
+import { cn } from "@/lib/utils";
+
+export function UploadDocumentButton({ applicationId, className }: { applicationId: string; className?: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, setIsPending] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -74,11 +76,12 @@ export function UploadDocumentButton({ applicationId }: { applicationId: string 
 
   return (
     <>
+
       <Button 
         onClick={() => { setIsOpen(true); setErrorMsg(null); }}
         variant="primary"
         size="lg"
-        className="w-full font-bold text-lg flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white border-0 shadow-lg py-3 rounded-xl"
+        className={cn("w-full font-bold text-lg flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white border-0 shadow-lg py-3 rounded-xl", className)}
       >
         <UploadCloud size={22} /> Ajouter un document
       </Button>

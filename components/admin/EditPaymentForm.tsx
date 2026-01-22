@@ -1,10 +1,24 @@
+
 import { useState } from "react";
 
-export default function EditPaymentForm({ payment, onSave, onCancel }) {
+interface Payment {
+  id: string;
+  amount: number;
+  currency: string;
+  // Add other fields as needed
+}
+
+interface EditPaymentFormProps {
+  payment: Payment;
+  onSave: (payment: Payment) => void | Promise<void>;
+  onCancel: () => void;
+}
+
+export default function EditPaymentForm({ payment, onSave, onCancel }: EditPaymentFormProps) {
   const [amount, setAmount] = useState(payment.amount);
   const [currency, setCurrency] = useState(payment.currency);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     await onSave({ ...payment, amount, currency });
   };
@@ -14,7 +28,7 @@ export default function EditPaymentForm({ payment, onSave, onCancel }) {
       <input
         type="number"
         value={amount}
-        onChange={e => setAmount(e.target.value)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAmount(Number(e.target.value))}
         placeholder="Montant"
         min={0}
         required
@@ -22,7 +36,7 @@ export default function EditPaymentForm({ payment, onSave, onCancel }) {
       <input
         type="text"
         value={currency}
-        onChange={e => setCurrency(e.target.value)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrency(e.target.value)}
         placeholder="Devise"
         required
       />

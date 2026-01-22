@@ -58,7 +58,7 @@ export default function AdminFinancesPage() {
                 <td colSpan={9} className="text-center py-12 text-slate-400 font-medium">Aucun paiement trouvé.</td>
               </tr>
             )}
-            {finances.map((f) => (
+            {finances.map((f:any) => (
               <tr key={f.id} className="hover:bg-yellow-50 transition-all group">
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-slate-700">{new Date(f.createdAt).toLocaleDateString()}</td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-slate-800 font-bold">{f.user?.fullName || 'Inconnu'}</td>

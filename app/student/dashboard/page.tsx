@@ -99,7 +99,7 @@ export default async function StudentDashboard() {
             {/* Grouper les candidatures par pays */}
             {student.applications.length > 0 ? (
               Object.entries(
-                student.applications.reduce((acc, app) => {
+                student.applications.reduce<Record<string, typeof student.applications>>(function(acc, app) {
                   const country = app.university.country || 'Autre';
                   if (!acc[country]) acc[country] = [];
                   acc[country].push(app);
@@ -110,10 +110,10 @@ export default async function StudentDashboard() {
                   <div className="flex items-center gap-3 mb-6">
                     <Flag className="text-[#db9b16]" size={28} />
                     <h2 className="text-2xl font-extrabold text-[#db9b16] tracking-tight uppercase drop-shadow-sm">{country}</h2>
-                    <span className="bg-[#db9b16]/10 text-[#db9b16] text-xs font-bold px-3 py-1 rounded-full ml-2">{apps.length} université{apps.length > 1 ? 's' : ''}</span>
+                    <span className="bg-[#db9b16]/10 text-[#db9b16] text-xs font-bold px-3 py-1 rounded-full ml-2">{(apps as typeof student.applications).length} université{(apps as typeof student.applications).length > 1 ? 's' : ''}</span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {apps.map(app => (
+                    {(apps as typeof student.applications).map(app => (
                       <ApplicationCard key={app.id} app={app} />
                     ))}
                   </div>

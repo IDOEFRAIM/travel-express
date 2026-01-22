@@ -24,9 +24,9 @@ export function DeleteStudentButton({ studentId, studentName }: { studentId: str
   return (
     <>
       <Button
-        variant="danger"
+        variant="outline"
         size="sm"
-        className="h-9 w-9 p-0 rounded-lg text-red-500 hover:text-white hover:bg-red-500"
+        className="h-9 w-9 p-0 rounded-lg text-red-500 hover:text-white hover:bg-red-500 border-red-500"
         onClick={handleDelete}
         disabled={loading}
         title="Supprimer l'étudiant"

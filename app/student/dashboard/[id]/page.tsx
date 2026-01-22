@@ -117,7 +117,7 @@ export default async function ApplicationDetail({ params }: { params: Promise<{ 
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* LIGNE DE TEMPS */}
-          <section className="lg:col-span-7 bg-white rounded-[2.5rem] p-8 md:p-10 shadow-2xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden">
+          <section className="lg:col-span-7 bg-white rounded-4xl p-8 md:p-10 shadow-2xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden">
             <div className="flex items-center justify-between mb-10 relative z-10">
               <h2 className="text-2xl font-black text-slate-900">Parcours de réussite</h2>
               <span className="px-4 py-1.5 rounded-full bg-slate-900 text-white text-[10px] font-black uppercase tracking-[0.2em]">
@@ -165,7 +165,7 @@ export default async function ApplicationDetail({ params }: { params: Promise<{ 
               <div className="text-lg font-black text-blue-900 mb-1">{app.university.name}</div>
               <div className="text-blue-700 text-sm font-semibold mb-1">{app.university.city}</div>
             </div>
-            <div className="bg-white rounded-[2.5rem] p-8 shadow-xl shadow-slate-200/50 border border-slate-100">
+            <div className="bg-white rounded-4xl p-8 shadow-xl shadow-slate-200/50 border border-slate-100">
               <div className="flex items-center justify-between mb-8">
                 <h3 className="font-black text-slate-900 flex items-center gap-3 text-xl">
                   <FileText size={24} className="text-[#db9b16]"/> Dossier Digital
@@ -199,7 +199,7 @@ export default async function ApplicationDetail({ params }: { params: Promise<{ 
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 mb-8 rounded-[2rem] border-2 border-dashed border-slate-100 bg-slate-50/50">
+                <div className="text-center py-12 mb-8 rounded-4xl border-2 border-dashed border-slate-100 bg-slate-50/50">
                   <FileText size={48} className="mx-auto text-slate-200 mb-4" />
                   <p className="text-sm text-slate-400 font-bold uppercase tracking-widest">Aucun document</p>
                 </div>
@@ -211,7 +211,7 @@ export default async function ApplicationDetail({ params }: { params: Promise<{ 
             </div>
 
             {/* Support Widget */}
-            <div className="bg-slate-950 rounded-[2.5rem] p-8 text-white relative overflow-hidden group">
+            <div className="bg-slate-950 rounded-4xl p-8 text-white relative overflow-hidden group">
               <h3 className="font-black mb-4 text-xl relative z-10">Une question ?</h3>
               <p className="text-slate-400 text-sm mb-8 font-medium relative z-10">
                 Nos experts répondent en moins de 2h sur WhatsApp.

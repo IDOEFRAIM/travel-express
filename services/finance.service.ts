@@ -1,4 +1,4 @@
-export async function updatePayment(id, data) {
+export async function updatePayment(id:any, data:any) {
   const res = await fetch(`/api/admin/finances/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },

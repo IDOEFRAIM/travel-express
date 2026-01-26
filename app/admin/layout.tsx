@@ -9,26 +9,30 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // 1. Protection et récupération des données
+  // 1. Protection : On récupère l'ID via le service d'auth
   const userId = await authService.requireUser();
+
+  // 2. On récupère les infos nécessaires
   const user = await prisma.user.findUnique({ 
     where: { id: userId },
     select: { role: true, fullName: true, email: true } 
   });
 
-  // 2. Vérification sécurité
+  // 3. Sécurité : Seuls les ADMINS passent
   if (!user || user.role !== 'ADMIN') {
     redirect('/student/dashboard');
   }
 
   return (
     <div className="flex min-h-screen bg-[#F4F7FE]">
-      {/* On affiche la Sidebar à gauche */}
+      {/* Sidebar Admin : Elle est fixe ou prend une largeur définie (ex: w-64) */}
       <AdminSidebar user={user} />
       
-      {/* On affiche le contenu de la page à droite */}
-      <main className="flex-1 min-w-0 overflow-auto">
-        {children}
+      {/* Zone de contenu principale */}
+      <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8">
+          {children}
+        </div>
       </main>
     </div>
   );

@@ -75,6 +75,8 @@ export const authService = {
    */
   async logout() {
     const cookieStore = await cookies();
+    cookieStore.delete('user_id');
+
     cookieStore.delete('session');
   }
 }

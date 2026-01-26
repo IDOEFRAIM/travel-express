@@ -31,30 +31,31 @@ export default async function RootLayout({
   
   let userData = null;
 
-  // Si on a un ID, on récupère le rôle et le nom en BDD
-// app/layout.tsx
+
 
 if (userId) {
   userData = await prisma.user.findUnique({
-    where: { id: userId },
+    where: { id: userId.trim() },
     select: { 
       role: true,
-      fullName: true // <-- Remplace "name" par "fullName"
+      fullName: true 
     }
-  });
+   
+  })
 }
+const isAdmin = userData?.role?.toUpperCase() == 'ADMIN';
 
+console.log('userfata',userData,"userid",userId)
   return (
     <html lang="fr">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {/* On passe maintenant les vraies infos à la Navbar */}
         <Navbar 
 isConnected={!!userId} 
   userRole={userData?.role} 
   userName={userData?.fullName || undefined}
         />
         <ReactQueryProvider>
-          <main className="pt-20"> {/* Ajout d'un padding pour compenser la Navbar fixed */}
+          <main className={isAdmin ? "" : "pt-20"}> {/* Ajout d'un padding pour compenser la Navbar fixed */}
             {children}
           </main>
         </ReactQueryProvider>

@@ -4,12 +4,13 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { logoutAction } from "@/actions/logout.action";
 import { useRouter } from "next/navigation";
-import { User, LogOut, LayoutDashboard, FileText, Globe } from "lucide-react";
+import { User, LogOut, FileText, Globe } from "lucide-react";
+import { cn } from "@/lib/utils"; // Import de l'utilitaire cn
 
 interface NavbarProps {
   isConnected: boolean;
   userRole?: string;
-  userName?: string; // Ajouté pour personnaliser
+  userName?: string;
 }
 
 const Navbar = ({ isConnected, userRole, userName }: NavbarProps) => {
@@ -21,9 +22,18 @@ const Navbar = ({ isConnected, userRole, userName }: NavbarProps) => {
     router.refresh();
   };
 
+  // Condition : si c'est un admin, on cache complètement la barre
+  const isAdmin = userRole === "ADMIN";
+console.log("DEBUG LAYOUT - Role:", userRole, "IsAdmin:", isAdmin);
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
-      <nav className="container mx-auto px-6 h-20 flex items-center justify-between">
+    <header
+      className={cn(
+        "fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100 transition-all",
+        isAdmin ? "hidden" : "flex" // Utilisation de cn pour le display
+      )}
+    >
+      <nav className="container mx-auto px-6 h-20 flex items-center justify-between w-full">
         
         {/* LOGO */}
         <Link href="/" className="flex items-center gap-2 group">
@@ -36,7 +46,7 @@ const Navbar = ({ isConnected, userRole, userName }: NavbarProps) => {
           </div>
         </Link>
 
-        {/* NAVIGATION LINKS (Desktop) */}
+        {/* NAVIGATION LINKS */}
         <div className="hidden md:flex items-center gap-8 text-sm font-bold text-slate-500">
           <Link href="/#destinations" className="hover:text-slate-900 transition-colors flex items-center gap-2">
             <Globe size={16} /> Destinations
@@ -63,8 +73,7 @@ const Navbar = ({ isConnected, userRole, userName }: NavbarProps) => {
             </>
           ) : (
             <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-full border border-slate-100">
-              {/* Profile Link */}
-              <Link href={userRole === 'ADMIN' ? "/admin/dashboard" : "/student/dashboard"}>
+              <Link href="/student/dashboard">
                 <div className="flex items-center gap-3 pl-3 pr-1">
                   <span className="hidden lg:block text-xs font-black text-slate-700">
                     {userName || "Mon Profil"}
@@ -75,10 +84,8 @@ const Navbar = ({ isConnected, userRole, userName }: NavbarProps) => {
                 </div>
               </Link>
 
-              {/* Separator */}
               <div className="w-[1px] h-4 bg-slate-200 mx-1" />
 
-              {/* Logout */}
               <button 
                 onClick={handleLogout}
                 className="p-2 text-slate-400 hover:text-red-500 transition-colors"

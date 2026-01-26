@@ -14,6 +14,7 @@ export async function loginAction(prevState: any, formData: FormData) {
     return { error: "Email et mot de passe requis" }
   }
 
+  // Normalisation pour éviter les erreurs de doublons
   const email = emailInput.toLowerCase().trim();
 
   try {
@@ -23,6 +24,7 @@ export async function loginAction(prevState: any, formData: FormData) {
       return { error: "Identifiants invalides" }
     }
 
+    // Gestion du mot de passe (Compatibilité Ancien -> Bcrypt)
     const isBcrypt = user.password.startsWith('$2');
     let isValid = false;
 
@@ -31,6 +33,7 @@ export async function loginAction(prevState: any, formData: FormData) {
     } else {
       isValid = passwordInput === user.password;
       if (isValid) {
+        // Migration automatique vers un hash sécurisé
         const hashedPassword = await bcrypt.hash(passwordInput, 12);
         await prisma.user.update({
           where: { id: user.id },
@@ -43,21 +46,23 @@ export async function loginAction(prevState: any, formData: FormData) {
       return { error: "Identifiants invalides" }
     }
 
-    // CRUCIAL: Attendre que le cookie soit écrit
+    // ✅ SOLUTION : Utiliser l'ID réel de la BDD (ex: user.id) 
+    // et non un identifiant manuel qui pourrait être obsolète.
     await authService.createSession(user.id, user.role);
 
-    // Préparer le chemin sans rediriger tout de suite
     targetPath = user.role === 'ADMIN' ? '/admin/dashboard' : '/student/dashboard';
 
   } catch (error: any) {
-    // Si l'erreur vient d'un redirect lancé par requireUser ou autre dans le try
-    if (error.digest?.includes('NEXT_REDIRECT')) throw error;
+    // Indispensable pour que Next.js puisse gérer la redirection
+    if (error.message === 'NEXT_REDIRECT' || error.digest?.includes('NEXT_REDIRECT')) {
+      throw error;
+    }
     
     console.error("Login Error:", error)
     return { error: "Une erreur technique est survenue" }
   }
 
-  // REDIRECTION À L'EXTÉRIEUR DU TRY/CATCH
+  // Redirection sécurisée
   if (targetPath) {
     redirect(targetPath);
   }

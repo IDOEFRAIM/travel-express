@@ -96,10 +96,10 @@ export default function ApplicationCard({ app }: { app: any }) {
       {/* 4. ACTIONS */}
       <div className="pt-2">
         <Link 
-          href={`/student/dashboard/${app.id}`} 
+          href={`/student/${app.id}`} 
           className="flex items-center justify-center w-full bg-slate-900 text-white font-black py-4 rounded-2xl hover:bg-[#db9b16] transition-all shadow-xl shadow-slate-900/10 gap-2 group/btn"
         >
-          Gérer mes documents
+          Gérer ma candidature
           <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
         </Link>
         <p className="text-center text-[9px] font-bold text-slate-300 uppercase tracking-[0.2em] mt-4">

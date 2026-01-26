@@ -20,7 +20,7 @@ export default async function AdminLayout({
 
   // 3. Sécurité : Seuls les ADMINS passent
   if (!user || user.role !== 'ADMIN') {
-    redirect('/student/dashboard');
+    redirect('/');
   }
 
   return (

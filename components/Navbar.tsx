@@ -67,13 +67,13 @@ console.log("DEBUG LAYOUT - Role:", userRole, "IsAdmin:", isAdmin);
               </Link>
               <Link href="/register">
                 <Button className="rounded-full px-6 bg-slate-900 hover:bg-[#db9b16] text-white transition-all shadow-lg shadow-slate-200">
-                  Postuler
+                  S'inscrire
                 </Button>
               </Link>
             </>
           ) : (
             <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-full border border-slate-100">
-              <Link href="/student/dashboard">
+              <Link href="/student">
                 <div className="flex items-center gap-3 pl-3 pr-1">
                   <span className="hidden lg:block text-xs font-black text-slate-700">
                     {userName || "Mon Profil"}

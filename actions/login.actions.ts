@@ -50,7 +50,7 @@ export async function loginAction(prevState: any, formData: FormData) {
     // et non un identifiant manuel qui pourrait être obsolète.
     await authService.createSession(user.id, user.role);
 
-    targetPath = user.role === 'ADMIN' ? '/admin/dashboard' : '/student/dashboard';
+    targetPath = user.role === 'ADMIN' ? '/admin/dashboard' : '/student/';
 
   } catch (error: any) {
     // Indispensable pour que Next.js puisse gérer la redirection

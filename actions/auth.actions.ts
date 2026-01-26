@@ -108,6 +108,6 @@ export async function registerAction(prevState: any, formData: FormData) {
   // 5. Création de session et redirection (Hors du try/catch pour éviter d'intercepter le redirect de Next.js)
   if (success) {
     await authService.createSession(userId, userRole as any);
-    redirect('/student/dashboard');
+    redirect('/student/');
   }
 }

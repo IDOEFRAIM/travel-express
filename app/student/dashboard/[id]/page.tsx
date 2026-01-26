@@ -59,23 +59,7 @@ export default async function ApplicationDetail({ params }: { params: Promise<{ 
 
   return (
     <div className="min-h-screen bg-[#fafbfc] font-sans selection:bg-[#db9b16] selection:text-white pb-20">
-      
-      {/* 🔮 HEADER PREMIUM */}
-      <header className="bg-white/70 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/student/dashboard" className="group flex items-center gap-3">
-             <div className="h-10 w-10 bg-slate-950 rounded-xl flex items-center justify-center text-[#db9b16] font-black group-hover:rotate-[-6deg] transition-all">TE</div>
-             <div className="flex flex-col">
-                <span className="font-black text-slate-900 tracking-tighter uppercase text-xs leading-none">Travel Express</span>
-                <span className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">Student Portal</span>
-             </div>
-          </Link>
-          
-          <Link href="/student/dashboard" className="flex items-center gap-2 text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-slate-900 transition-all py-2 pr-4 rounded-full border border-transparent hover:border-slate-100 pl-2">
-            <ArrowLeft size={14} strokeWidth={3} /> Dashboard
-          </Link>
-        </div>
-      </header>
+ 
 
       <main className="max-w-7xl mx-auto px-6 pt-12">
         

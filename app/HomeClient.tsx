@@ -58,8 +58,9 @@ export default function HomeClient({ isConnected }: { isConnected: boolean }) {
       <section className="relative min-h-[90vh] flex flex-col items-center justify-center pt-20 overflow-hidden">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_50%,_rgba(219,155,22,0.05)_0%,_rgba(255,255,255,1)_100%)]" />
         <div ref={blobRef} className="absolute h-96 w-96 bg-blue-400/10 rounded-full blur-[120px] -z-10 pointer-events-none" />
+              {/*<Navbar isConnected={isConnected} /> 🌌 HERO SECTION AVEC BLOB INTERACTIF */}
+
         
-        <Navbar isConnected={isConnected} />
         
         <div className="container mx-auto px-6 text-center z-10">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-100 rounded-full mb-8 animate-in fade-in slide-in-from-top-4 duration-1000">

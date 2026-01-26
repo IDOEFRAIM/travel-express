@@ -54,48 +54,7 @@ export default async function StudentDashboard() {
   return (
     <div className="min-h-screen bg-[#fafbfc] font-sans selection:bg-[#db9b16] selection:text-white">
       
-      {/* 🔮 NAVBAR GLASSMORPHISM */}
-      <header className="bg-white/80 backdrop-blur-xl border-b border-slate-200/60 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-10">
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="h-11 w-11 bg-slate-950 rounded-[1.2rem] flex items-center justify-center text-[#db9b16] font-black shadow-xl group-hover:rotate-6 transition-all duration-500">
-                TE
-              </div>
-              <span className="font-black text-slate-900 tracking-tighter text-xl italic">
-                TRAVEL <span className="text-[#db9b16] not-italic">EXPRESS</span>
-              </span>
-            </Link>
-            <nav className="hidden lg:flex items-center gap-8">
-              <Link href="/student/dashboard" className="flex items-center gap-2 text-[#db9b16] font-black text-[11px] uppercase tracking-[0.2em]">
-                <LayoutDashboard size={14} strokeWidth={3} />
-                Tableau de bord
-              </Link>
-              <Link href="/student/documents" className="text-slate-400 hover:text-slate-900 font-black text-[11px] uppercase tracking-[0.2em] transition-colors">
-                Mes Documents
-              </Link>
-            </nav>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <Link href="/#destinations" className="hidden sm:flex items-center gap-3 bg-slate-950 text-white px-6 py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-[#db9b16] hover:text-slate-950 transition-all shadow-lg shadow-slate-200 group">
-              <Plus size={16} strokeWidth={3} className="group-hover:rotate-90 transition-transform" />
-              Nouveau dossier
-            </Link>
-            <div className="h-8 w-px bg-slate-200 mx-2 hidden sm:block" />
-            
-            <form action={async () => {
-              'use server';
-              await authService.logout();
-              redirect('/login');
-            }}>
-              <button type="submit" className="h-11 w-11 flex items-center justify-center hover:bg-red-50 rounded-2xl text-slate-300 hover:text-red-500 transition-all border border-transparent hover:border-red-100">
-                <LogOut size={20} />
-              </button>
-            </form>
-          </div>
-        </div>
-      </header>
+    
 
       <main className="max-w-7xl mx-auto px-6 py-12">
         

@@ -52,7 +52,7 @@ console.log("DEBUG LAYOUT - Role:", userRole, "IsAdmin:", isAdmin);
             <Globe size={16} /> Destinations
           </Link>
           {isConnected && (
-            <Link href="/student/dashboard" className="hover:text-slate-900 transition-colors flex items-center gap-2">
+            <Link href="/student/" className="hover:text-slate-900 transition-colors flex items-center gap-2">
               <FileText size={16} /> Mes Dossiers
             </Link>
           )}

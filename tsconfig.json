@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-, "app/api/route.js", "app/admin/universities/[id]/page.jsx", "app/admin/universities/[id]/edit/page.tsx", "app/api/universities/[id]/route.js", "app/admin/universities/page.jsx", "app/admin/dashboard/page.jsx", "app/admin/documents/page.tsx"  ],
+, "app/api/route.js", "app/admin/universities/[id]/page.jsx", "app/admin/universities/[id]/edit/page.tsx", "app/api/universities/[id]/route.ts", "app/admin/universities/page.tsx", "app/admin/dashboard/page.jsx", "app/admin/documents/page.tsx"  ],
   "exclude": ["node_modules"]
 }

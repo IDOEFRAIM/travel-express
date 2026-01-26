@@ -1,8 +1,11 @@
 'use client';
 
 import { useState } from "react";
-import { Bell, FileText, CheckCircle, UserPlus, FileCheck, XCircle, ArrowUpCircle, Filter } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { 
+  Bell, FileText, CheckCircle, UserPlus, FileCheck, 
+  XCircle, ArrowUpCircle, X, Calendar as CalendarIcon 
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export type ActivityItem = {
    id: string;
@@ -11,12 +14,10 @@ export type ActivityItem = {
    description: string;
    date: Date;
    user: string;
-   icon?: any;
-   color: string;
+   color?: string;
 };
 
-// Map types back to icons since functions/components cant be passed from server easily
-const ICONS = {
+const ICONS: Record<string, any> = {
    'APP_NEW': UserPlus,
    'APP_UPDATE': ArrowUpCircle,
    'DOC_NEW': FileText,
@@ -26,137 +27,124 @@ const ICONS = {
    'PAYMENT_UPDATE': ArrowUpCircle
 };
 
-
-// Couleurs par type d'activité
-const TYPE_COLORS: Record<string, string> = {
-   'APP_NEW': 'bg-blue-500',
-   'APP_UPDATE': 'bg-blue-400',
-   'DOC_NEW': 'bg-purple-500',
-   'DOC_VERIFIED': 'bg-green-500',
-   'DOC_REJECTED': 'bg-red-500',
-   'PAYMENT_NEW': 'bg-yellow-500',
-   'PAYMENT_UPDATE': 'bg-yellow-400',
+const TYPE_THEMES: Record<string, { bg: string, text: string, iconBg: string }> = {
+   'APP_NEW': { bg: 'bg-blue-500', text: 'text-blue-600', iconBg: 'bg-blue-50' },
+   'APP_UPDATE': { bg: 'bg-sky-500', text: 'text-sky-600', iconBg: 'bg-sky-50' },
+   'DOC_NEW': { bg: 'bg-purple-500', text: 'text-purple-600', iconBg: 'bg-purple-50' },
+   'DOC_VERIFIED': { bg: 'bg-emerald-500', text: 'text-emerald-600', iconBg: 'bg-emerald-50' },
+   'DOC_REJECTED': { bg: 'bg-red-500', text: 'text-red-600', iconBg: 'bg-red-50' },
+   'PAYMENT_NEW': { bg: 'bg-amber-500', text: 'text-amber-600', iconBg: 'bg-amber-50' },
+   'PAYMENT_UPDATE': { bg: 'bg-orange-500', text: 'text-orange-600', iconBg: 'bg-orange-50' },
 };
 
 export function ActivityList({ initialActivities }: { initialActivities: ActivityItem[] }) {
-   const [filter, setFilter] = useState<'ALL' | 'APP' | 'DOC' | 'PAYMENT'>('ALL');
+  const [filter, setFilter] = useState<'ALL' | 'APP' | 'DOC' | 'PAYMENT'>('ALL');
   const [dateFilter, setDateFilter] = useState('');
 
-  // Ajoute une couleur par défaut selon le type si absente
-  const activitiesWithColor = initialActivities.map(item => ({
-    ...item,
-    color: item.color || TYPE_COLORS[item.type] || 'bg-slate-300',
-  }));
-
-  const filteredItems = activitiesWithColor.filter(item => {
-    // Type Filter
+  const filteredItems = initialActivities.filter(item => {
     const matchType = 
        filter === 'ALL' ? true :
-       filter === 'APP' ? (item.type && item.type.startsWith('APP')) :
-       filter === 'DOC' ? (item.type && item.type.startsWith('DOC')) :
-       filter === 'PAYMENT' ? (item.type && item.type.startsWith('PAYMENT')) : true;
+       filter === 'APP' ? item.type.startsWith('APP') :
+       filter === 'DOC' ? item.type.startsWith('DOC') :
+       filter === 'PAYMENT' ? item.type.startsWith('PAYMENT') : true;
 
     if (!matchType) return false;
 
-    // Date Filter
     if (dateFilter) {
        const itemDate = new Date(item.date).toISOString().split('T')[0];
        return itemDate === dateFilter;
     }
-
     return true;
   });
 
-  // Group by Day
   const grouped = filteredItems.reduce((acc, item) => {
-     const dateKey = new Date(item.date).toLocaleDateString();
+     const dateKey = new Date(item.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
      if (!acc[dateKey]) acc[dateKey] = [];
      acc[dateKey].push(item);
      return acc;
   }, {} as Record<string, ActivityItem[]>);
 
   return (
-    <div>
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-            {/* FILTER TABS */}
-            <div className="flex gap-2 bg-slate-100 p-1 rounded-xl w-fit">
-            <button 
-               onClick={() => setFilter('ALL')}
-               className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filter === 'ALL' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-               Tout
-            </button>
-            <button 
-               onClick={() => setFilter('APP')}
-               className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filter === 'APP' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-               Dossiers
-            </button>
-            <button 
-               onClick={() => setFilter('DOC')}
-               className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filter === 'DOC' ? 'bg-white text-purple-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-               Documents
-            </button>
-            <button 
-               onClick={() => setFilter('PAYMENT')}
-               className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filter === 'PAYMENT' ? 'bg-white text-yellow-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-               Paiements
-            </button>
+    <div className="max-w-4xl mx-auto">
+        {/* HEADER FILTERS */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+            <div className="flex gap-1.5 bg-slate-100/80 p-1.5 rounded-2xl w-fit border border-slate-200/50">
+                {(['ALL', 'APP', 'DOC', 'PAYMENT'] as const).map((t) => (
+                    <button 
+                        key={t}
+                        onClick={() => setFilter(t)}
+                        className={cn(
+                            "px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                            filter === t ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                        )}
+                    >
+                        {t === 'ALL' ? 'Flux global' : t === 'APP' ? 'Dossiers' : t === 'DOC' ? 'Documents' : 'Paiements'}
+                    </button>
+                ))}
             </div>
 
-            {/* DATE FILTER */}
-            <div className="flex items-center gap-3 bg-white border border-slate-200 p-2 pl-4 rounded-xl shadow-sm">
-                <span className="text-slate-400 text-sm font-bold">Le:</span>
-                <input 
-                    type="date"
-                    value={dateFilter}
-                    onChange={(e) => setDateFilter(e.target.value)}
-                    className="outline-none text-slate-600 font-medium bg-transparent text-sm active:bg-transparent"
-                />
-                {dateFilter && (
-                    <button 
-                        onClick={() => setDateFilter('')}
-                        className="text-slate-300 hover:text-red-500 transition-colors"
-                        title="Effacer la date"
-                    >
-                        <XCircle size={18} />
-                    </button>
-                )}
+            <div className="relative group">
+                <div className="flex items-center gap-3 bg-white border border-slate-200 px-4 py-3 rounded-2xl shadow-sm group-hover:border-[#db9b16]/50 transition-all">
+                    <CalendarIcon size={16} className="text-slate-400 group-hover:text-[#db9b16]" />
+                    <input 
+                        type="date"
+                        value={dateFilter}
+                        onChange={(e) => setDateFilter(e.target.value)}
+                        className="outline-none text-slate-700 font-bold bg-transparent text-xs uppercase"
+                    />
+                    {dateFilter && (
+                        <button onClick={() => setDateFilter('')} className="text-slate-300 hover:text-red-500">
+                            <X size={14} strokeWidth={3} />
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
 
-      <div className="space-y-12">
-         {Object.entries(grouped).map(([date, items]) => (
-            <div key={date} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-               <h3 className="font-bold text-slate-400 text-sm uppercase tracking-wider mb-6 pl-14">{date}</h3>
+        {/* TIMELINE CONTENT */}
+        <div className="relative">
+          {Object.entries(grouped).map(([date, items]) => (
+            <div key={date} className="mb-16 last:mb-0">
+               <h3 className="font-black text-slate-300 text-[10px] uppercase tracking-[0.2em] mb-8 flex items-center gap-4">
+                    <span className="shrink-0">{date}</span>
+                    <div className="h-px w-full bg-slate-100"></div>
+               </h3>
                
-               <div className="space-y-0 text-slate-500 border-l-2 border-slate-100 ml-4">
+               <div className="space-y-0 relative ml-6">
+                  {/* Vertical line with gradient */}
+                  <div className="absolute left-0 top-2 bottom-2 w-px bg-gradient-to-b from-slate-200 via-slate-100 to-transparent"></div>
+
                   {items.map((item) => {
                       const Icon = ICONS[item.type] || Bell;
+                      const theme = TYPE_THEMES[item.type] || { bg: 'bg-slate-400', text: 'text-slate-500', iconBg: 'bg-slate-50' };
+                      
                       return (
-                      <div key={item.id} className="relative pl-10 py-4 first:pt-0 last:pb-0 group">
+                      <div key={item.id} className="relative pl-10 pb-10 last:pb-0 group">
                          {/* Timeline Dot */}
-                         <div className={`absolute -left-2.25 top-4 h-4.5 w-4.5 rounded-full border-4 border-white ${item.color} shadow-sm group-hover:scale-110 transition-transform`}></div>
+                         <div className={cn(
+                             "absolute -left-[5px] top-6 h-[10px] w-[10px] rounded-full border-2 border-white ring-4 ring-white shadow-sm transition-all duration-500 group-hover:scale-150",
+                             theme.bg
+                         )}></div>
                          
-                         <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100/50 hover:shadow-md transition-all duration-300 flex items-start gap-4">
-                            <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 ${item.color || 'bg-slate-300'} bg-opacity-10`}>
-                               <Icon size={24} className={(item.color ? item.color.replace('bg-', 'text-') : 'text-slate-400')} />
+                         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/40 transition-all duration-500 flex items-start gap-5">
+                            <div className={cn("h-14 w-14 rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:rotate-6", theme.iconBg, theme.text)}>
+                               <Icon size={26} strokeWidth={2.5} />
                             </div>
-                            <div className="flex-1">
-                               <div className="flex justify-between items-start">
-                                  <h4 className="font-bold text-slate-800 text-sm">{item.title}</h4>
-                                  <span className="text-xs font-medium text-slate-400 font-mono">
+
+                            <div className="flex-1 min-w-0">
+                               <div className="flex justify-between items-start gap-4">
+                                  <h4 className="font-black text-slate-900 text-sm uppercase leading-tight tracking-tight truncate">{item.title}</h4>
+                                  <time className="text-[10px] font-black text-slate-300 font-mono bg-slate-50 px-2 py-1 rounded-md">
                                      {new Date(item.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                  </span>
+                                  </time>
                                </div>
-                               <p className="text-sm text-slate-500 mt-1 leading-relaxed">{item.description}</p>
-                               <div className="flex items-center gap-2 mt-3">
-                                  <div className="h-5 w-5 rounded-full bg-slate-100 overflow-hidden">
-                                     <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${item.user}`} alt="User" />
+                               <p className="text-sm text-slate-500 mt-2 font-medium leading-relaxed">{item.description}</p>
+                               
+                               <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-50">
+                                  <div className="h-6 w-6 rounded-lg bg-[#db9b16]/10 flex items-center justify-center overflow-hidden border border-white">
+                                     <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${item.user}`} alt="User" className="w-full h-full object-cover" />
                                   </div>
-                                  <span className="text-xs font-bold text-slate-400">{item.user}</span>
+                                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">{item.user}</span>
                                </div>
                             </div>
                          </div>
@@ -164,14 +152,15 @@ export function ActivityList({ initialActivities }: { initialActivities: Activit
                   )})}
                </div>
             </div>
-         ))}
-         
-         {filteredItems.length === 0 && (
-             <div className="text-center py-20 text-slate-400 font-medium bg-white rounded-3xl border border-slate-100/50">
-                Aucune activité trouvée pour ce filtre.
-             </div>
-         )}
-      </div>
+          ))}
+
+          {filteredItems.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-32 text-slate-300 bg-slate-50/50 rounded-[3rem] border-2 border-dashed border-slate-100">
+                 <Bell size={48} className="mb-4 opacity-20" />
+                 <p className="font-black uppercase tracking-widest text-xs">Aucune activité enregistrée</p>
+              </div>
+          )}
+        </div>
     </div>
   );
 }

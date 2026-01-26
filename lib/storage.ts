@@ -1,67 +1,45 @@
-import { supabase } from '@/lib/supabase';
-// Génère l'URL publique Supabase Storage pour un fichier
-export function getSupabasePublicUrl(filePath: string, bucket = "agence") {
-  const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  return `${baseUrl}/storage/v1/object/public/${bucket}/${filePath}`;
-}
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+// @/lib/storage.ts
+'use server'
 
-const S3_BUCKET = process.env.S3_BUCKET || "agence-uploads";
-const S3_REGION = process.env.S3_REGION || "us-east-1";
-const S3_ENDPOINT = process.env.S3_ENDPOINT || "http://localhost:4566"; // LocalStack default
+import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
-// Initialize S3 Client
-// For LocalStack, we need to force path style and set the endpoint
-export const s3Client = new S3Client({
-  region: S3_REGION,
-  endpoint: S3_ENDPOINT,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || "test", // LocalStack default
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "test", // LocalStack default
-  },
-  forcePathStyle: true, // Needed for LocalStack
-});
+export async function getFileUrl(filePath: string | null, bucket = "agence") {
+  if (!filePath) return null;
 
-// Nouvelle fonction d'upload vers Supabase Storage
-export async function uploadFileToSupabase(file: File, filePath: string, bucket = "agence") {
-  const { data, error } = await supabase.storage.from(bucket).upload(filePath, file, {
-    cacheControl: '3600',
-    upsert: true,
-  });
-  if (error) {
-    console.error("Error uploading to Supabase Storage:", error);
-    throw new Error("Failed to upload file to Supabase Storage.");
+  // 1. EXTRACTION DU CHEMIN RELATIF
+  // On s'assure de ne garder que "applications/..." 
+  // même si l'URL est complète ou contient des paramètres
+  let cleanPath = filePath.split('?')[0]; // Enlève les paramètres ?t=...
+  
+  if (cleanPath.includes(`/storage/v1/object/public/${bucket}/`)) {
+    cleanPath = cleanPath.split(`/public/${bucket}/`)[1];
+  } else if (cleanPath.startsWith(`${bucket}/`)) {
+    cleanPath = cleanPath.replace(`${bucket}/`, '');
   }
-  // Retourne le chemin relatif à stocker en base
-  return filePath;
-}
 
-export async function getFileUrl(fileKey: string) {
-  // Si l'URL est déjà complète (http/https), retourne-la directement
-  if (fileKey.startsWith('http')) return fileKey;
-  // Sinon, retourne l'URL publique Supabase Storage
-  return getSupabasePublicUrl(fileKey);
-}
+  // Nettoyage final des slashes superflus
+  cleanPath = cleanPath.replace(/^\/+/, '');
 
-// Helper to ensure bucket exists (useful for initialization/seeding)
-export async function ensureBucketExists() {
   try {
-    const { CreateBucketCommand, HeadBucketCommand } = await import("@aws-sdk/client-s3");
-    
-    try {
-        await s3Client.send(new HeadBucketCommand({ Bucket: S3_BUCKET }));
-    } catch (e: any) {
-        // If 404, bucket doesn't exist
-        if (e.name === "NotFound" || e.$metadata?.httpStatusCode === 404) {
-             console.log(`Creating bucket ${S3_BUCKET}...`);
-             await s3Client.send(new CreateBucketCommand({ Bucket: S3_BUCKET }));
-             console.log(`Bucket ${S3_BUCKET} created.`);
-        } else {
-            throw e;
-        }
+    // 2. GÉNÉRATION DE L'URL SIGNÉE
+    // On utilise createSignedUrl car c'est la seule méthode fiable pour les fichiers privés
+    // ou pour garantir l'affichage des PDF sans erreur 403.
+    const { data, error } = await supabaseAdmin
+      .storage
+      .from(bucket)
+      .createSignedUrl(cleanPath, 3600); // Lien valide 1 heure
+
+    if (error) {
+      console.error(`❌ Erreur Supabase [${cleanPath}]:`, error.message);
+      
+      // Fallback : Si la signature échoue, on tente l'URL publique car ton bucket est "PUBLIC"
+      const { data: pub } = supabaseAdmin.storage.from(bucket).getPublicUrl(cleanPath);
+      return pub.publicUrl;
     }
-  } catch (error) {
-      console.error("Error ensuring bucket exists:", error);
+
+    return data.signedUrl;
+  } catch (err) {
+    console.error("💥 Erreur critique Storage:", err);
+    return null;
   }
 }

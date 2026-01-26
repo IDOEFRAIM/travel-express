@@ -1,28 +1,40 @@
 "use client";
 import { useEffect, useState, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { updatePayment } from "@/services/finance.service";
+import { updatePaymentAction } from "@/actions/payment.action";
+import { PaymentStatus } from "@prisma/client";
 import axios from "axios";
 
-export default function UpdatePaymentPage() {
+export default function updatePaymentActionPage() {
   const router = useRouter();
   const params = useParams();
   const id = params?.id;
   type University = { id: string; name: string; city: string };
   type User = { id: string; fullName: string; email: string };
 
-  // Valeurs initiales (anciennes valeurs)
-  const [initial, setInitial] = useState({
+  // 1. Définir le type de l'objet de formulaire
+  interface PaymentForm {
+    userId: string;
+    universityId: string;
+    amount: string;
+    currency: string;
+    method: string;
+    status: PaymentStatus; // <--- Type strict ici
+    reference: string;
+  }
+
+  // 2. Initialiser avec le type
+  const [initial, setInitial] = useState<PaymentForm>({
     userId: "",
     universityId: "",
     amount: "",
     currency: "XOF",
     method: "CASH",
-    status: "PENDING",
+    status: PaymentStatus.PENDING,
     reference: ""
   });
-  // Valeurs du formulaire (modifiables)
-  const [form, setForm] = useState(initial);
+
+  const [form, setForm] = useState<PaymentForm>(initial);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -73,7 +85,7 @@ export default function UpdatePaymentPage() {
           console.log("[DEBUG] users:", data.users);
           setStudents(data.users || []);
         }
-      } catch {}
+      } catch { }
     }
     async function fetchUniversities() {
       try {
@@ -81,7 +93,7 @@ export default function UpdatePaymentPage() {
         if (!res.ok) throw new Error();
         const data = await res.json();
         if (!ignore) setUniversities(data.universities || []);
-      } catch {}
+      } catch { }
     }
     if (id) fetchPayment();
     fetchStudents();
@@ -103,16 +115,32 @@ export default function UpdatePaymentPage() {
     setShowUserResults(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  // ./app/admin/finances/[id]/update/page.tsx
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 1. On récupère l'ID depuis params
+    // useParams peut renvoyer un tableau ou undefined, on force en string
+    const applicationId = Array.isArray(id) ? id[0] : id;
+
+    // 2. Vérification de sécurité pour TypeScript
+    if (!applicationId) {
+      setError("ID de la candidature manquant.");
+      return;
+    }
+
     setLoading(true);
     setError("");
+
     try {
-      await updatePayment(id, form);
+      // ✅ On passe l'ID sécurisé
+      await updatePaymentAction(applicationId, form.status as PaymentStatus);
+
       setSuccess("✅ Paiement mis à jour !");
       setTimeout(() => router.push("/admin/finances"), 1200);
-    } catch {
-      setError("❌ Erreur lors de la mise à jour");
+    } catch (err) {
+      setError("Erreur lors de la mise à jour");
     } finally {
       setLoading(false);
     }
@@ -245,7 +273,7 @@ export default function UpdatePaymentPage() {
           <select
             className="border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-[#db9b16] outline-none"
             value={form.status}
-            onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
+            onChange={e => setForm(f => ({ ...f, status: e.target.value as PaymentStatus }))}
             required
           >
             <option value="PENDING">En attente</option>

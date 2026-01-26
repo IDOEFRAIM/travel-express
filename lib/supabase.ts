@@ -1,9 +1,25 @@
 import { createClient } from '@supabase/supabase-js';
 
-console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-if (!supabaseKey) throw new Error('supabaseKey is required.');
+// On essaie de récupérer la clé sous les deux noms possibles
+const supabaseAnonKey = 
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+if (!supabaseUrl || !supabaseAnonKey) {
+  // On logue en console serveur pour voir laquelle manque précisément
+  console.error("Missing Env Vars:", { 
+    url: !!supabaseUrl, 
+    key: !!supabaseAnonKey 
+  });
+  throw new Error('Les variables d’environnement Supabase sont manquantes.');
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+export const getSupabaseAdmin = () => {
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceRoleKey) throw new Error("Clé de rôle service manquante.");
+  return createClient(supabaseUrl, serviceRoleKey);
+};

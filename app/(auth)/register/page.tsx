@@ -59,7 +59,7 @@ export default function RegisterPage() {
               <Link href="/" className="inline-block mb-8 text-2xl font-black text-slate-900 tracking-tighter hover:opacity-80 transition-opacity">
                 Travel <span className="text-[#db9b16]">Express</span>
               </Link>
-              <h1 className="text-3xl font-bold text-slate-900">Ouvrir un dossier 📁</h1>
+              <h1 className="text-3xl font-bold text-slate-900">Ouvrir un compte 📁</h1>
               <p className="text-slate-500 mt-2 font-medium">Dites-nous qui vous êtes pour commencer.</p>
            </div>
 
@@ -94,7 +94,7 @@ export default function RegisterPage() {
               label="Mot de passe"
               name="password"
               type="password"
-              placeholder="Au moins 6 caractères"
+              placeholder="Au moins 8 caractères"
               required
               minLength={6}
               className="bg-white focus:border-[#db9b16] focus:ring-[#db9b16]/10"

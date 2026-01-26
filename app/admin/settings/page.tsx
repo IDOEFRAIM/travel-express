@@ -1,30 +1,33 @@
+// @/app/admin/settings/page.tsx
 "use client";
-import { SettingsView } from "@/components/admin/SettingsView";
-import axios from "axios";
+import { SettingsView } from "@/components/admin/setting/SettingsView";
 import { useQuery } from "@tanstack/react-query";
+import { getCurrentUserAction } from "@/actions/user.actions"; // Import de l'action
 
 export default function SettingsPage() {
-  const { data: settings = {}, isLoading, error } = useQuery({
-    queryKey: ["adminSettings"],
+  const { data: user, isLoading, error } = useQuery({
+    queryKey: ["currentUser"],
     queryFn: async () => {
-      const res = await axios.get("/api/admin/settings");
-      return res.data.settings || {};
+      const data = await getCurrentUserAction();
+      if (!data) throw new Error("Utilisateur non trouvé");
+      return data;
     },
   });
 
-  if (isLoading) return <div>Chargement...</div>;
-  if (error) return <div>Erreur lors du chargement des paramètres.</div>;
+  if (isLoading) return <div className="p-12 font-black text-slate-300 animate-pulse">Chargement du profil...</div>;
+  if (error) return <div className="p-12 text-red-500">Erreur de session.</div>;
 
   return (
-    <main className="p-8 md:p-12 max-w-5xl mx-auto">
+    <main className="p-8 md:p-12 max-w-7xl mx-auto">
       <header className="mb-10">
-        <h1 className="text-3xl font-bold text-slate-800">Paramètres</h1>
-        <p className="text-slate-500 font-medium mt-1">
-          Gérez votre compte et les configurations de l'agence
+        <h1 className="text-4xl font-black text-slate-900 uppercase tracking-tight">Paramètres</h1>
+        <p className="text-slate-500 font-medium mt-2">
+          Gérez vos informations personnelles et votre sécurité.
         </p>
       </header>
 
-      <SettingsView user={settings} />
+      {/* Maintenant 'user' contient bien fullName, email, phone, etc. */}
+      <SettingsView user={user} />
     </main>
   );
 }

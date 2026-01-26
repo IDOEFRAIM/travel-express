@@ -87,3 +87,24 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+@media print {
+  /* Cache tout sauf le reçu */
+  body * {
+    visibility: hidden;
+  }
+  #receipt-to-print, #receipt-to-print * {
+    visibility: visible;
+  }
+  #receipt-to-print {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    -webkit-print-color-adjust: exact !important; /* Force les couleurs sur Chrome/Safari */
+    print-color-adjust: exact !important;         /* Force les couleurs */
+  }
+  /* Supprime les marges par défaut (date, URL en haut de page) */
+  @page {
+    margin: 0;
+  }
+}

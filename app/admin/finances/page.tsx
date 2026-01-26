@@ -1,15 +1,19 @@
-'use client';
+"use client";
 
+import { useMemo } from "react";
 import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
-import AddPaymentForm from "@/components/admin/AddPaymentForm";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { 
+  TrendingUp, Plus, Calendar, 
+  Loader2, ArrowRight, Wallet,
+  BadgeCent
+} from "lucide-react";
 
 export default function AdminFinancesPage() {
-  const [showForm, setShowForm] = useState(false);
   const router = useRouter();
-  const { data: finances = [], isLoading, error } = useQuery({
+
+  const { data: finances = [], isLoading, isError } = useQuery({
     queryKey: ["adminFinances"],
     queryFn: async () => {
       const res = await axios.get("/api/admin/finances");
@@ -17,94 +21,153 @@ export default function AdminFinancesPage() {
     }
   });
 
-  if (isLoading) return <div>Chargement...</div>;
-  if (error) return <div>Erreur lors du chargement des finances.</div>;
+  // Calcul des totaux groupés par devise pour ne pas mélanger les serviettes et les torchons
+  const totalsByCurrency = useMemo(() => {
+    return finances.reduce((acc: Record<string, number>, curr: any) => {
+      const amount = Number(curr.amount) || 0;
+      const currency = curr.currency || "XOF"; 
+      
+      if (!acc[currency]) {
+        acc[currency] = 0;
+      }
+      acc[currency] += amount;
+      
+      return acc;
+    }, {});
+  }, [finances]);
+
+  if (isLoading) return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#fcfcfd]">
+      <Loader2 className="animate-spin text-yellow-500 mb-4" size={40} />
+      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Synchronisation des registres...</p>
+    </div>
+  );
+
+  if (isError) return (
+    <div className="min-h-screen flex flex-col items-center justify-center text-red-500">
+      <p className="font-black uppercase tracking-widest">Erreur de chargement des flux</p>
+      <button onClick={() => window.location.reload()} className="mt-4 text-xs underline">Réessayer</button>
+    </div>
+  );
 
   return (
-    <main className="p-8 md:p-12 max-w-4xl mx-auto">
-      <header className="mb-12 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-800">Finances</h1>
-          <p className="text-slate-500 font-medium mt-1">Historique des paiements enregistrés sur la plateforme.</p>
-        </div>
-        <button
-          className="bg-yellow-500 text-white font-bold py-3 px-6 rounded-xl shadow hover:bg-yellow-600 transition flex items-center gap-2 text-lg"
-          onClick={() => setShowForm(f => !f)}
-        >
-          <span className="text-xl">+</span> {showForm ? 'Fermer' : 'Nouveau paiement'}
-        </button>
-      </header>
+    <main className="min-h-screen bg-[#fcfcfd] py-12 px-6">
+      <div className="max-w-6xl mx-auto">
+        
+        {/* HEADER */}
+        <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-16">
+          <div className="animate-in slide-in-from-left duration-700">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="h-2 w-2 rounded-full bg-yellow-500 animate-pulse" />
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Trésorerie & Multi-Devises</span>
+            </div>
+            <h1 className="text-5xl font-black text-slate-900 tracking-tight italic">Trésorerie</h1>
+          </div>
 
-      {showForm && <AddPaymentForm />}
-
-      <div className="bg-white rounded-2xl shadow border border-slate-100">
-        <table className="w-full divide-y divide-slate-100">
-          <thead className="bg-slate-50">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Date</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Nom</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Email</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Montant</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Devise</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Méthode</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Statut</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Référence</th>
-              <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-slate-100">
-            {finances.length === 0 && (
-              <tr>
-                <td colSpan={9} className="text-center py-12 text-slate-400 font-medium">Aucun paiement trouvé.</td>
-              </tr>
-            )}
-            {finances.map((f:any) => (
-              <tr key={f.id} className="hover:bg-yellow-50 transition-all group">
-                <td className="px-4 py-4 whitespace-nowrap text-sm text-slate-700">{new Date(f.createdAt).toLocaleDateString()}</td>
-                <td className="px-4 py-4 whitespace-nowrap text-sm text-slate-800 font-bold">{f.user?.fullName || 'Inconnu'}</td>
-                <td className="px-4 py-4 whitespace-nowrap text-sm text-slate-500">{f.user?.email || '-'}</td>
-                <td className="px-4 py-4 whitespace-nowrap text-sm text-slate-800 font-bold">{f.amount}</td>
-                <td className="px-4 py-4 whitespace-nowrap text-sm text-slate-700">{f.currency}</td>
-                <td className="px-4 py-4 whitespace-nowrap text-sm text-slate-700">{f.method}</td>
-                <td className="px-4 py-4 whitespace-nowrap text-sm">
-                  {f.status === 'COMPLETED' ? (
-                    <span className="text-green-600 font-bold">Payé</span>
-                  ) : f.status === 'FAILED' ? (
-                    <span className="text-red-500 font-bold">Échoué</span>
-                  ) : (
-                    <span className="text-yellow-500 font-bold">En attente</span>
-                  )}
-                </td>
-                <td className="px-4 py-4 whitespace-nowrap text-xs text-slate-400">{f.reference || '-'}</td>
-                <td className="px-4 py-4 whitespace-nowrap text-xs flex gap-2">
-                  <button
-                    className="text-blue-600 hover:underline text-xs font-bold"
-                    onClick={() => router.push(`/admin/finances/${f.id}/update`)}
-                    title="Modifier le paiement"
-                  >
-                    ✏️ Modifier
-                  </button>
-                  <button
-                    className="text-red-500 hover:underline text-xs font-bold"
-                    onClick={async () => {
-                      if (window.confirm('Confirmer la suppression de ce paiement ?')) {
-                        try {
-                          await axios.delete(`/api/admin/payments?id=${f.id}`);
-                          router.refresh();
-                        } catch (err) {
-                          alert('Erreur lors de la suppression du paiement');
-                        }
-                      }
-                    }}
-                    title="Supprimer le paiement"
-                  >
-                    🗑️ Supprimer
-                  </button>
-                </td>
-              </tr>
+          <div className="flex flex-wrap items-center gap-4 animate-in slide-in-from-right duration-700">
+            {/* Génération dynamique des badges de totaux par devise */}
+            {Object.entries(totalsByCurrency).map(([currency, total]) => (
+              <div key={currency} className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/40 flex items-center gap-4 px-6 transition-transform hover:scale-105">
+                <div className="h-10 w-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
+                  <TrendingUp size={20} />
+                </div>
+                <div>
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">Total {currency}</p>
+                  <p className="text-xl font-black text-slate-900 leading-none">
+                    {(total as number).toLocaleString('fr-FR')} <span className="text-[10px] font-bold text-yellow-600">{currency}</span>
+                  </p>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
+            
+            <button
+              onClick={() => router.push('/admin/finances/new')}
+              className="group flex items-center gap-4 bg-slate-900 text-white px-8 py-5 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-yellow-500 transition-all shadow-2xl shadow-slate-900/20 active:scale-95 ml-2"
+            >
+              <Plus size={20} />
+              Nouveau Paiement
+            </button>
+          </div>
+        </header>
+
+        {/* TABLEAU DES FLUX */}
+        <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-6 duration-1000">
+          <div className="px-10 py-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
+             <div className="flex items-center gap-3">
+               <BadgeCent className="text-slate-400" size={20} />
+               <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em]">Journal des Flux Entrants</h3>
+             </div>
+             <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 text-right">
+                {finances.length} opérations <br/> consolidées
+             </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-separate border-spacing-0">
+              <thead>
+                <tr className="bg-white">
+                  <th className="py-6 px-10 text-[10px] font-black text-slate-300 uppercase tracking-widest border-b border-slate-50">Date</th>
+                  <th className="py-6 px-10 text-[10px] font-black text-slate-300 uppercase tracking-widest border-b border-slate-50">Étudiant</th>
+                  <th className="py-6 px-10 text-[10px] font-black text-slate-300 uppercase tracking-widest border-b border-slate-50">Description</th>
+                  <th className="py-6 px-10 text-[10px] font-black text-slate-300 uppercase tracking-widest border-b border-slate-50 text-right">Montant</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {finances.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="py-32 text-center">
+                      <div className="inline-flex h-16 w-16 bg-slate-50 rounded-full items-center justify-center mb-4">
+                        <Wallet className="text-slate-200" size={30} />
+                      </div>
+                      <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Aucun mouvement de caisse</p>
+                    </td>
+                  </tr>
+                ) : (
+                  finances.map((f: any) => (
+                    <tr 
+                      key={f.id} 
+                      className="group hover:bg-slate-50/80 transition-all cursor-pointer"
+                      onClick={() => router.push(`/admin/finances/${f.id}`)}
+                    >
+                      <td className="py-8 px-10">
+                        <div className="flex items-center gap-3">
+                          <Calendar size={14} className="text-slate-300" />
+                          <span className="text-sm font-bold text-slate-600">
+                            {f.createdAt ? new Date(f.createdAt).toLocaleDateString('fr-FR') : 'Date inconnue'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-8 px-10">
+                        <div>
+                          <p className="font-black text-slate-900 text-sm tracking-tight">{f.user?.fullName || 'Client Anonyme'}</p>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">{f.user?.email || '-'}</p>
+                        </div>
+                      </td>
+                      <td className="py-8 px-10">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-2xl group-hover:bg-white transition-colors border border-transparent group-hover:border-slate-100">
+                          <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">
+                            {f.application?.country ? `Dossier ${f.application.country}` : (f.type || "Service")}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-8 px-10 text-right">
+                        <div className="flex items-center justify-end gap-4 font-black text-slate-900 text-xl italic">
+                          {Number(f.amount).toLocaleString('fr-FR')} 
+                          <span className="text-[10px] text-yellow-600 font-bold not-italic">
+                            {f.currency || 'XOF'}
+                          </span>
+                          <div className="h-10 w-10 rounded-full border border-slate-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all transform group-hover:translate-x-1">
+                            <ArrowRight size={16} className="text-yellow-500" />
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </main>
   );

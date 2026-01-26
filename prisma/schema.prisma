@@ -1,4 +1,177 @@
-// Timeline des activités (paiements, documents, candidatures...)
+// --- CONFIGURATION ---
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// --- ENUMÉRATIONS ---
+
+enum Role {
+  ADMIN
+  STUDENT
+}
+
+enum ApplicationStatus {
+  DRAFT
+  SUBMITTED
+  REJECTED
+  UNDER_REVIEW
+  ACCEPTED
+  JW202_RECEIVED
+  VISA_GRANTED
+  FLIGHT_BOOKED
+  COMPLETED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  PARTIAL
+  REFUNDED
+}
+
+enum PaymentMethod {
+  ORANGE_MONEY
+  MOOV_MONEY
+  CASH
+  TRANSFER
+}
+
+enum DocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// --- UTILISATEURS ---
+
+model User {
+  id               String        @id @default(cuid())
+  email            String        @unique
+  password         String 
+  fullName         String? 
+  phone            String?
+  role             Role          @default(STUDENT)
+  
+  // Profil médical & Documents
+  passportNumber   String?       
+  specificDiseases String[]      @default([])
+  medicalHistory   String[]      @default([]) 
+  
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  // Relations
+  applications     Application[]
+  payments         Payment[]
+  activityLogs     ActivityLog[] @relation("AdminActivityLogs")
+}
+
+// --- DOSSIERS DE CANDIDATURE ---
+
+model Application {
+  id              String            @id @default(cuid())
+  userId          String
+  user            User              @relation(fields: [userId], references: [id])
+  
+  // Détails de la demande
+  country         String            @default("Chine") 
+  universityId    String? 
+  university      University?       @relation(fields: [universityId], references: [id])
+  desiredProgram  String?
+  
+  // État du dossier (Le Stepper)
+  status          ApplicationStatus @default(DRAFT)
+  progress        Int               @default(0)
+  rejectionReason String?           @db.Text
+
+  // Finances du dossier
+  applicationFee  Float             @default(0)
+  
+  // Données spécifiques au dossier (pour archivage)
+  passportNumber  String?           
+  medicalHistory  String?           @db.Text 
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  // Relations
+  documents       Document[]
+  payments        Payment[]
+  paymentStatus PaymentStatus @default(PENDING)
+}
+
+// --- UNIVERSITÉS ---
+
+model University {
+  id           String        @id @default(cuid())
+  name         String
+  city         String
+  country      String        @default("Chine")
+  summary      String?
+  description  String?       @db.Text
+  costRange    String?
+  programs     String?
+  images       String[]      // Tableau d'URLs
+  imageUrl     String?       // Image principale
+  pdfUrl       String?
+  createdAt    DateTime      @default(now())
+
+  applications Application[]
+  payments     Payment[]
+}
+
+// --- DOCUMENTS ---
+
+model Document {
+  id            String         @id @default(cuid())
+  applicationId String
+  application   Application    @relation(fields: [applicationId], references: [id])
+  type          String         // Ex: "PASSPORT", "DIPLOMA"
+  name          String
+  url           String
+  status        DocumentStatus @default(PENDING)
+  createdAt     DateTime       @default(now())
+}
+
+// --- FINANCES ---
+
+model Payment {
+  id            String        @id @default(cuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id])
+  
+  applicationId String?       
+  application   Application?  @relation(fields: [applicationId], references: [id])
+  
+  universityId  String?
+  university    University?   @relation(fields: [universityId], references: [id])
+
+  amount        Float
+  currency      String        @default("XOF")
+  method        PaymentMethod
+  status        PaymentStatus @default(PENDING)
+  reference     String?       
+  createdAt     DateTime      @default(now())
+}
+
+model FeesByCountry {
+  id        String   @id @default(cuid())
+  country   String   @unique 
+  amount    Float    
+  currency  String   @default("XOF")
+  updatedAt DateTime @updatedAt
+}
+
+// --- LOGS & ACTIVITÉ ---
+
 model Activity {
   id          String   @id @default(cuid())
   type        String
@@ -9,148 +182,15 @@ model Activity {
   color       String
   refId       String?
 }
-// Log des activités admin
+
 model ActivityLog {
-  id         String   @id @default(cuid())
-  adminId    String
-  action     String
-  targetType String?
-  targetId   String?
-  details    String?
-  createdAt  DateTime @default(now())
-
-  admin User @relation("AdminActivityLogs", fields: [adminId], references: [id])
-}
-
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL") // <--- Obligatoire
-}
-
-generator client {
-  provider = "prisma-client-js"
-  // Dans Prisma 7, évite d'ajouter des previewFeatures sauf si nécessaire
-}
-
-// Enums pour les statuts et rôles
-enum Role {
-  ADMIN
-  STUDENT
-}
-
-enum ApplicationStatus {
-  DRAFT // Brouillon
-  SUBMITTED // Soumis, en attente de l'agence
-  UNDER_REVIEW // En cours de traitement par l'université
-  ACCEPTED // Accepté par l'université
-  JW202_RECEIVED // Formulaire Visa reçu
-  VISA_GRANTED // Visa obtenu
-  FLIGHT_BOOKED // Billet pris, prêt au départ
-  COMPLETED // Arrivé et installé
-}
-
-enum DocumentStatus {
-  PENDING
-  APPROVED
-  REJECTED
-}
-
-enum PaymentMethod {
-  ORANGE_MONEY
-  MOOV_MONEY
-  CASH
-  TRANSFER
-}
-
-enum PaymentStatus {
-  PENDING
-  COMPLETED
-  FAILED
-}
-
-// Modèle Utilisateur principal
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String // Sera hashé
-  fullName  String?
-  phone     String?
-  role      Role     @default(STUDENT)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  applications Application[]
-  payments     Payment[]
-  activityLogs ActivityLog[] @relation("AdminActivityLogs")
-}
-
-// Catalogue des Universités
-model University {
   id          String   @id @default(cuid())
-  name        String
-  city        String
-  country     String   @default("Chine") // Pays ou destination (ex: Chine, Espagne, Allemagne)
-  summary     String? // Résumé court
-  description String?  @db.Text
-  costRange   String? // Ex: "2000-5000 USD/an"
-  programs    String? // Liste simple ou relation plus complexe si besoin
-  images      String[] // URLs des images (max 3)
-  imageUrl    String? // URL principale de l'image
-  pdfUrl      String? // Lien vers le PDF des conditions
+  adminId     String
+  action      String
+  targetType  String?
+  targetId    String?
+  details     String?
   createdAt   DateTime @default(now())
 
-  // Relations
-  applications Application[]
-  payments     Payment[]
-}
-
-// Dossier de candidature d'un étudiant
-model Application {
-  id           String     @id @default(cuid())
-  userId       String
-  universityId String
-  user         User       @relation(fields: [userId], references: [id])
-  university   University @relation(fields: [universityId], references: [id])
-
-  desiredProgram  String?
-  status          ApplicationStatus @default(DRAFT)
-  progress        Int               @default(0) // Pour la barre de progression (0-100)
-  rejectionReason String?           @db.Text
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  documents Document[]
-}
-
-// Documents (Passeport, Diplômes, Visa...)
-model Document {
-  id            String      @id @default(cuid())
-  applicationId String
-  application   Application @relation(fields: [applicationId], references: [id])
-
-  type         String // Ex: "PASSPORT", "DIPLOMA", "PHOTO"
-  name         String
-  url          String // Lien vers le fichier (Supabase Storage ou autre)
-  status       DocumentStatus @default(PENDING)
-  adminComment String? // Raison du rejet si rejeté
-
-  createdAt DateTime @default(now())
-}
-
-// Historique des paiements
-model Payment {
-  id           String        @id @default(cuid())
-  userId       String
-  user         User          @relation(fields: [userId], references: [id])
-  universityId String
-  university   University    @relation(fields: [universityId], references: [id])
-  amount       Float
-  currency     String        @default("XOF") // Franc CFA
-  method       PaymentMethod
-  status       PaymentStatus @default(PENDING)
-  reference    String? // ID de transaction Orange/Moov
-  createdAt    DateTime      @default(now())
+  admin       User     @relation("AdminActivityLogs", fields: [adminId], references: [id])
 }

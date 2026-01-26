@@ -1,24 +1,36 @@
-// Simple currency conversion service
-// You can extend this with real API rates (ex: fixer.io, openexchangerates.org)
-
+// On définit les taux par rapport au XOF (Franc CFA)
+// Le XOF est la base (1)
 const RATES = {
   XOF: 1,
-  EUR: 655.957, // 1 EUR = 655.957 XOF
-  USD: 600,      // Example rate, update as needed
-  // Add more currencies as needed
-};
+  EUR: 655.957, 
+  USD: 600,     
+  GNF: 0.070,   // Exemple : Franc Guinéen
+} as const;
 
-type Currency = keyof typeof RATES;
+export type Currency = keyof typeof RATES;
 
+/**
+ * Convertit un montant étranger vers le XOF
+ */
 export function convertToXOF(amount: number, currency: Currency): number {
   const rate = RATES[currency] || 1;
   return Math.round(amount * rate);
 }
 
-export function formatCurrency(amount: number, currency: string): string {
-  return `${amount} ${currency}`;
+/**
+ * Formatage professionnel des montants (ex: 1 500 000 FCFA)
+ */
+export function formatCurrency(amount: number, currency: string = 'FCFA'): string {
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'decimal',
+    minimumFractionDigits: 0,
+  }).format(amount) + ` ${currency}`;
 }
 
-// Usage example:
-// convertToXOF(100, 'EUR') // returns 65595
-// convertToXOF(50, 'USD')  // returns 30000
+/**
+ * Convertit du XOF vers une devise étrangère (Utile pour l'affichage étudiant)
+ */
+export function convertFromXOF(amountXOF: number, targetCurrency: Currency): number {
+  const rate = RATES[targetCurrency] || 1;
+  return Math.round(amountXOF / rate);
+}

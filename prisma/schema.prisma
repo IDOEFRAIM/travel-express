@@ -93,7 +93,7 @@ model Application {
   rejectionReason String?           @db.Text
 
   // Finances du dossier
-  applicationFee  Float             @default(0)
+  applicationFee  Float             @default(500000)
   
   // Données spécifiques au dossier (pour archivage)
   passportNumber  String?           

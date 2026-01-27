@@ -40,14 +40,7 @@ export function ProfileSettings({ user }: { user: any }) {
       {/* HEADER AVEC AVATAR PLACEHOLDER PRESTIGE */}
       <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border-b border-slate-50 pb-8">
         <div className="flex items-center gap-6">
-            <div className="relative group">
-                <div className="h-24 w-24 rounded-[2rem] bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-400 border-4 border-white shadow-xl overflow-hidden">
-                    <User size={40} strokeWidth={1.5} />
-                </div>
-                <div className="absolute -bottom-2 -right-2 h-8 w-8 bg-white rounded-xl shadow-lg border border-slate-50 flex items-center justify-center text-slate-400 group-hover:text-[#db9b16] transition-colors cursor-pointer">
-                    <Camera size={14} />
-                </div>
-            </div>
+
             <div>
                 <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic">Mon Profil</h2>
                 <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Édition des informations de compte</p>

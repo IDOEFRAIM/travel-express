@@ -28,7 +28,7 @@ async function getStudentData() {
       applications: {
         include: {
           university: true,
-          documents: true
+          documents: true,
         },
         orderBy: { createdAt: 'desc' }
       }
@@ -38,7 +38,6 @@ async function getStudentData() {
 
 export default async function StudentDashboard() {
   const student = await getStudentData();
-  
   if (!student) redirect('/login');
 
   // Groupage des candidatures par pays
@@ -104,8 +103,9 @@ export default async function StudentDashboard() {
         {/* 🗺️ AFFICHAGE DES GROUPES PAR PAYS */}
         {totalApps > 0 ? (
           <div className="space-y-24">
-            {Object.entries(groupedApplications).map(([country, apps]) => (
-              <section key={country} className="animate-in fade-in slide-in-from-bottom-8 duration-1000">
+            {Object.entries(groupedApplications).map(([country, apps]) => {
+              return (
+                                              <section key={country} className="animate-in fade-in slide-in-from-bottom-8 duration-1000">
                 <div className="flex items-center gap-6 mb-10">
                   <div className="h-16 w-16 bg-slate-950 rounded-[1.5rem] flex items-center justify-center text-3xl shadow-2xl shadow-slate-200 relative overflow-hidden group">
                     <Flag className="text-[#db9b16] relative z-10 group-hover:scale-110 transition-transform duration-500" size={28} />
@@ -129,7 +129,9 @@ export default async function StudentDashboard() {
                   ))}
                 </div>
               </section>
-            ))}
+              )
+            }
+            )}
 
             {/* 🚀 CTA RÉENGAGEMENT FINAL : VERSION LUMIÈRE & PRESTIGE */}
                         <section className="mt-32 p-12 md:p-20 rounded-[4rem] bg-white border border-slate-100 relative overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.03)]">

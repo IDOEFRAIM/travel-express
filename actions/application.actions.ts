@@ -122,7 +122,7 @@ export async function createApplicationAction(formData: FormData) {
         });
 
         // Valeur par défaut si pays non trouvé (1 million par sécurité/test)
-        const finalFee = feeRecord ? feeRecord.amount : 1000000;
+        const finalFee = feeRecord ? feeRecord.amount : 500000;
         
         const diseases = formData.getAll("diseases")
             .map(d => d.toString().trim())

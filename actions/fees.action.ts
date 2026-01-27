@@ -27,24 +27,54 @@ export async function updateFeeAction(formData: FormData) {
   try {
     await checkAdmin();
 
+    const id = formData.get('id') as string | null;
     const country = formData.get('country') as string;
     const amountStr = formData.get('amount') as string;
-    const amount = parseInt(amountStr, 10); // Utilise parseInt si tes montants sont des entiers (ex: FCFA)
+    const amount = parseInt(amountStr, 10);
 
     if (!country || isNaN(amount)) {
-      return { success: false, error: "Données invalides (Le montant doit être un nombre)" };
+      return { success: false, error: "Données invalides." };
     }
 
-    await prisma.feesByCountry.upsert({
-      where: { country: country.trim() },
-      update: { amount },
-      create: { country: country.trim(), amount }
+    const countryName = country.trim();
+
+    // 1. Mise à jour ou Création dans la table de configuration (FeesByCountry)
+    if (id) {
+      await prisma.feesByCountry.update({
+        where: { id },
+        data: { country: countryName, amount }
+      });
+    } else {
+      await prisma.feesByCountry.upsert({
+        where: { country: countryName },
+        update: { amount },
+        create: { country: countryName, amount }
+      });
+    }
+
+    // 2. RÉPARATION DES APPLICATIONS EXISTANTES
+    // On met à jour toutes les applications de ce pays qui ont encore le prix fallback
+    await prisma.application.updateMany({
+      where: {
+        country: {
+      equals: countryName,
+      mode: 'insensitive', // Ignore la différence entre 'Chine' et 'CHINE'
+    },
+     
+      },
+      data: {
+        applicationFee: amount // On injecte le nouveau prix réel
+      }
     });
 
     revalidatePath('/admin/settings');
+    // On revalide aussi la page des applications pour que l'admin voie le changement
+    revalidatePath('/admin/applications'); 
+
     return { success: true };
-  } catch (error) {
-    return { success: false, error: "Erreur lors de la mise à jour des frais." };
+  } catch (error: any) {
+    console.error("Erreur updateFeeAction:", error);
+    return { success: false, error: "Erreur lors de la mise à jour." };
   }
 }
 

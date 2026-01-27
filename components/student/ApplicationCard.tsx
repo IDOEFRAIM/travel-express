@@ -1,11 +1,11 @@
 "use client";
 import Link from "next/link";
-import { 
-  GraduationCap, 
-  MapPin, 
-  Loader2, 
-  FileText, 
-  ExternalLink, 
+import {
+  GraduationCap,
+  MapPin,
+  Loader2,
+  FileText,
+  ExternalLink,
   ChevronRight,
   CheckCircle2
 } from "lucide-react";
@@ -16,7 +16,7 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
   SUBMITTED: { label: "Dossier soumis", color: "text-blue-600 bg-blue-50" },
   UNDER_REVIEW: { label: "En cours d'examen", color: "text-amber-600 bg-amber-50" },
   ACCEPTED: { label: "Admis", color: "text-emerald-600 bg-emerald-50" },
-  REJECTED: { label: "Refusé", color: "text-red-600 bg-red-50" },
+  REJECTED: { label: "Refusé.", color: "text-red-600 bg-red-50" },
   VISA_GRANTED: { label: "Visa obtenu ✈️", color: "text-purple-600 bg-purple-50" },
 };
 
@@ -26,7 +26,7 @@ export default function ApplicationCard({ app }: { app: any }) {
 
   return (
     <div className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 p-7 flex flex-col gap-6 hover:border-[#db9b16]/30 transition-all group relative overflow-hidden h-full">
-      
+
       {/* 1. HEADER : IDENTITÉ */}
       <div className="flex items-start gap-4">
         <div className={`p-4 rounded-2xl transition-colors shrink-0 ${hasUniversity ? 'bg-[#db9b16]/10 text-[#db9b16]' : 'bg-slate-100 text-slate-400'}`}>
@@ -39,11 +39,15 @@ export default function ApplicationCard({ app }: { app: any }) {
           <div className="flex items-center gap-1 text-[10px] font-black text-slate-400 mt-1 uppercase tracking-[0.1em]">
             <MapPin size={12} className="text-[#db9b16] shrink-0" />
             <span className="truncate">
-              {hasUniversity 
-                ? `${app.university?.city}, ${app.university?.country}` 
+              {hasUniversity
+                ? `${app.university?.city}, ${app.university?.country}`
                 : `Destination : ${app.country || 'Chine'}`}
             </span>
           </div>
+          <h2 > Frais des dossiers:
+            <span className="text-amber-300">
+              {app.applicationFee ?? '500000'} F CFA</span>
+          </h2>
         </div>
       </div>
 
@@ -54,10 +58,10 @@ export default function ApplicationCard({ app }: { app: any }) {
           <span className={`text-sm font-black ${statusInfo.color.split(' ')[0]}`}>{statusInfo.label}</span>
         </div>
         <div className="h-10 w-10 rounded-xl bg-white/50 flex items-center justify-center shadow-sm backdrop-blur-sm">
-           {!hasUniversity || app.status === 'UNDER_REVIEW'
-             ? <Loader2 size={18} className="animate-spin text-[#db9b16]" /> 
-             : <CheckCircle2 size={18} className="text-emerald-500" />
-           }
+          {!hasUniversity || app.status === 'UNDER_REVIEW'
+            ? <Loader2 size={18} className="animate-spin text-[#db9b16]" />
+            : <CheckCircle2 size={18} className="text-emerald-500" />
+          }
         </div>
       </div>
 
@@ -66,12 +70,12 @@ export default function ApplicationCard({ app }: { app: any }) {
         {hasUniversity ? (
           <div className="space-y-3">
             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Ressources d'admission :</span>
-            
+
             <div className="flex flex-col gap-2">
               {app.university?.pdfUrl && (
-                <a 
-                  href={app.university.pdfUrl} 
-                  target="_blank" 
+                <a
+                  href={app.university.pdfUrl}
+                  target="_blank"
                   className="flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-900 hover:text-white rounded-xl transition-all group/link border border-slate-100"
                 >
                   <div className="flex items-center gap-2 font-bold text-[10px] uppercase">
@@ -95,8 +99,8 @@ export default function ApplicationCard({ app }: { app: any }) {
 
       {/* 4. ACTIONS */}
       <div className="pt-2">
-        <Link 
-          href={`/student/${app.id}`} 
+        <Link
+          href={`/student/${app.id}`}
           className="flex items-center justify-center w-full bg-slate-900 text-white font-black py-4 rounded-2xl hover:bg-[#db9b16] transition-all shadow-xl shadow-slate-900/10 gap-2 group/btn"
         >
           Gérer ma candidature

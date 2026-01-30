@@ -45,15 +45,13 @@ export async function loginAction(prevState: any, formData: FormData) {
     if (!isValid) {
       return { error: "Identifiants invalides" }
     }
-
-    // ✅ SOLUTION : Utiliser l'ID réel de la BDD (ex: user.id) 
-    // et non un identifiant manuel qui pourrait être obsolète.
+    
     await authService.createSession(user.id, user.role);
 
     targetPath = user.role === 'ADMIN' ? '/admin/dashboard' : '/student/';
 
   } catch (error: any) {
-    // Indispensable pour que Next.js puisse gérer la redirection
+    // Pour que Next.js puisse gérer la redirection
     if (error.message === 'NEXT_REDIRECT' || error.digest?.includes('NEXT_REDIRECT')) {
       throw error;
     }

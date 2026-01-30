@@ -87,7 +87,7 @@ export function ProfileSettings({ user }: { user: any }) {
                 placeholder="+221 ..." 
             />
             
-            <div className="p-6 bg-slate-50/50 rounded-[2rem] border border-slate-100 border-dashed">
+            <div className="p-6 bg-slate-50/50 rounded-4xl border border-slate-100 border-dashed">
                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
                     Vos informations sont utilisées uniquement pour la gestion de vos dossiers et les notifications de suivi.
                 </p>

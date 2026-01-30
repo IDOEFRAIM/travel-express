@@ -15,7 +15,6 @@ export default function PublicApplyForm({ countryName }: { countryName: string }
     setSuccess(false);
     setIsPending(true);
 
-    // On récupère l'objet FormData directement depuis le formulaire
     const formData = new FormData(event.currentTarget);
 
     try {
@@ -37,7 +36,7 @@ export default function PublicApplyForm({ countryName }: { countryName: string }
   return (
     <form 
       onSubmit={handleSubmit} 
-      className="space-y-6 bg-white p-8 rounded-[2rem] shadow-xl border border-slate-100 max-w-lg mx-auto mt-8 transition-all"
+      className="space-y-6 bg-white p-8 rounded-4xl shadow-xl border border-slate-100 max-w-lg mx-auto mt-8 transition-all"
     >
       <div className="space-y-1">
         <h2 className="text-2xl font-black text-slate-900 italic uppercase">

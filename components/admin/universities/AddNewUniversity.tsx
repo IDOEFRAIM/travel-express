@@ -155,7 +155,7 @@ export default function AddNewUniversity() {
                         required
                         rows={2}
                         placeholder="EX:Resume bref de l'institution ou university..."
-                        className="premium-input resize-none min-h-[80px] pt-6"
+                        className="premium-input resize-none min-h-80 pt-6"
                       />
                     </div>
                     <p className="text-[8px] font-bold text-slate-400 uppercase mt-2 ml-1 tracking-widest">

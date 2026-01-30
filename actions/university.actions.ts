@@ -20,7 +20,7 @@ async function checkAdmin() {
 }
 
 /**
- * Sauvegarde ou met à jour une institution (Université)
+ * Sauvegarde ou met à jour une (Université)
  */
 export async function saveUniversityAction(formData: FormData) {
   try {
@@ -31,7 +31,7 @@ export async function saveUniversityAction(formData: FormData) {
     const id = formData.get('id') as string; 
     const name = formData.get('name') as string;
     const city = formData.get('city') as string;
-    const country = formData.get('country') as string; // ✅ Fix: Ne doit pas être nul
+    const country = formData.get('country') as string; 
     const description = formData.get('description') as string;
     const summary = (formData.get('summary') as string) || description?.substring(0, 160) + "...";
     
@@ -108,7 +108,7 @@ export async function saveUniversityAction(formData: FormData) {
     const universityPayload = {
       name,
       city,
-      country, // ✅ Requis par Prisma
+      country,
       summary,
       description,
       costRange,

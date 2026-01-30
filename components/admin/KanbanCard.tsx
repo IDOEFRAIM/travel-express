@@ -29,7 +29,7 @@ export function KanbanCard({ application }: KanbanCardProps) {
 
   return (
     <div className={cn(
-      "bg-white p-5 rounded-[1.5rem] shadow-sm border border-slate-100 mb-4 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 group relative",
+      "bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-4 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 group relative",
       isPending && "opacity-60 pointer-events-none"
     )}>
       
@@ -91,7 +91,6 @@ export function KanbanCard({ application }: KanbanCardProps) {
         <button 
           className="p-2.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors"
           title="Supprimer le dossier"
-          onClick={() => {/* Ton action de suppression */}}
         >
           <Trash2 size={16} />
         </button>

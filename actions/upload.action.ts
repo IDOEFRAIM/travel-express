@@ -35,7 +35,7 @@ export async function uploadFileAction(
 
     if (error) throw error;
 
-    // IMPORTANT : On retourne le path complet (filePath) car c'est lui qu'on stockera en DB
+    //  On retourne le path complet (filePath) car c'est lui qu'on stockera en DB
     return { success: true, path: filePath };
   } catch (error: any) {
     console.error("Upload Error:", error);

@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { ApplicationStatus } from "@prisma/client";
 
 /**
- * Utilitaire pour synchroniser la progression avec le statut
+ * cette function sert a synchroniser la progression avec le statut
  */
 function getProgressFromStatus(status: ApplicationStatus): number {
     const mapping: Record<ApplicationStatus, number> = {
@@ -25,7 +25,7 @@ function getProgressFromStatus(status: ApplicationStatus): number {
 }
 
 /**
- * Assigner une université à un dossier
+ * on assigne une université à un application
  */
 export async function assignUniversityAction(applicationId: string, universityId: string) {
   try {
@@ -33,17 +33,16 @@ export async function assignUniversityAction(applicationId: string, universityId
       where: { id: applicationId },
       data: { 
         universityId,
-        // Optionnel: Passer automatiquement en UNDER_REVIEW quand une univ est assignée
         status: 'UNDER_REVIEW',
         progress: getProgressFromStatus('UNDER_REVIEW')
       }
     });
     
     revalidatePath(`/admin/applications/${applicationId}`);
-    revalidatePath('/student/dashboard'); // Pour que l'étudiant voie l'université
+    revalidatePath('/student/'); 
     return { success: true };
   } catch (error) {
-    console.error("Assign University Error:", error);
+    console.error("Nous n'arrivons pas a attribuer une universite du a::", error);
     return { error: "Impossible d'assigner l'université" };
   }
 }
@@ -60,13 +59,13 @@ export async function updateApplicationStatusAction(id: string, status: string) 
             where: { id },
             data: { 
                 status: newStatus,
-                progress: progress // On garde la barre de progression synchro
+                progress: progress 
             }
         });
 
         revalidatePath(`/admin/applications/${id}`);
         revalidatePath('/admin/students');
-        revalidatePath('/student/dashboard');
+        revalidatePath('/student/');
         
         return { success: true };
     } catch (error) {
@@ -116,12 +115,12 @@ export async function createApplicationAction(formData: FormData) {
         const fullName = formData.get("fullName") as string;
         const passportNumber = formData.get("passportNumber") as string;
 
-        // Récupération des frais
+        // On recupere les frais en fonction du pays
         const feeRecord = await prisma.feesByCountry.findUnique({
             where: { country: country }
         });
 
-        // Valeur par défaut si pays non trouvé (1 million par sécurité/test)
+        // Si y a pas de frais specifiques, on applique 500000 par defaut
         const finalFee = feeRecord ? feeRecord.amount : 500000;
         
         const diseases = formData.getAll("diseases")
@@ -129,7 +128,7 @@ export async function createApplicationAction(formData: FormData) {
             .filter(d => d !== "");
 
         await prisma.$transaction(async (tx) => {
-            // 1. Mise à jour du profil User
+            //  Mise à jour du profil User
             await tx.user.update({
                 where: { id: userId },
                 data: {
@@ -141,7 +140,7 @@ export async function createApplicationAction(formData: FormData) {
                 }
             });
 
-            // 2. Création de l'application
+            //  Création de l'application
             await tx.application.create({
                 data: {
                     userId,
@@ -163,21 +162,19 @@ export async function createApplicationAction(formData: FormData) {
     }
 
     if (successId) {
-        redirect('/student/dashboard?success=true');
+        redirect('/student/?success=true');
     }
 }
 
 
 export async function deleteApplicationAction(id: string) {
     try {
-        // 1. Suppression du dossier
-        // Note: Si tu as des relations (paiements, docs), 
-        // assure-toi que ton schéma Prisma a "onDelete: Cascade"
+        // Suppression du dossier
         await prisma.application.delete({
             where: { id }
         });
 
-        // 2. Rafraîchissement des données pour l'admin
+        // Rafraîchissement des données pour l'admin
         revalidatePath("/admin/applications");
         revalidatePath(`/admin/students`);
 

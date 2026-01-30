@@ -71,7 +71,7 @@ export default function AddPaymentForm({ applicationId, onSuccess, onCancel }: A
         </div>
       </div>
       <h2 className="text-3xl font-black text-slate-900 mb-3 italic tracking-tighter">TRANSAC RÉUSSIE</h2>
-      <p className="text-slate-400 text-xs font-bold uppercase tracking-widest max-w-[280px] leading-relaxed">
+      <p className="text-slate-400 text-xs font-bold uppercase tracking-widest max-w-70 leading-relaxed">
         Le montant de <span className="text-slate-900">{form.amount} {form.currency}</span> a été provisionné avec succès.
       </p>
     </div>

@@ -8,7 +8,6 @@ const supabaseAnonKey =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  // On logue en console serveur pour voir laquelle manque précisément
   console.error("Missing Env Vars:", { 
     url: !!supabaseUrl, 
     key: !!supabaseAnonKey 

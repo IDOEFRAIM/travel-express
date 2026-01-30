@@ -85,7 +85,7 @@ export default function ApplicationCard({ app }: { app: any }) {
                   <ExternalLink size={14} className="opacity-0 group-hover/link:opacity-100 transition-opacity" />
                 </a>
               )}
-              {/* On peut mapper d'autres documents ici si besoin */}
+              
             </div>
           </div>
         ) : (

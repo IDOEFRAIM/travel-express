@@ -11,7 +11,7 @@ interface UniversityProposal {
 }
 
 export function ProposalsList({ proposals }: { proposals: UniversityProposal[] }) {
-  // État vide stylisé
+
   if (!proposals?.length) {
     return (
       <div className="flex flex-col items-center justify-center p-12 bg-slate-50 rounded-[2.5rem] border-2 border-dashed border-slate-200">

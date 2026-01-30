@@ -62,7 +62,7 @@ export default function StudentSearchSelector({ onSelect }: StudentSearchSelecto
       </div>
 
       {/* RÉSULTATS DE RECHERCHE */}
-      <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar transition-all">
+      <div className="space-y-4 max-h-500 overflow-y-auto pr-2 custom-scrollbar transition-all">
         {debouncedSearch.length >= 2 && students.length > 0 ? (
           <div className="grid gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
             <div className="flex items-center justify-between px-6">
@@ -79,7 +79,7 @@ export default function StudentSearchSelector({ onSelect }: StudentSearchSelecto
                 className="group w-full flex items-center justify-between p-6 bg-white border border-slate-50 rounded-[2.5rem] hover:border-[#db9b16]/50 hover:shadow-2xl hover:shadow-slate-200/40 transition-all duration-500 relative overflow-hidden"
               >
                 {/* Effet de brillance au hover */}
-                <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 bg-gradient-to-r from-transparent via-[#db9b16]/5 to-transparent z-0" />
+                <div className="absolute inset-0 -translate-x-ful group-hover:translate-x-full transition-transform duration-1000 bg-linear-to-r from-transparent via-[#db9b16]/5 to-transparent z-0" />
 
                 <div className="flex items-center gap-6 relative z-10">
                   <div className="h-16 w-16 rounded-[1.8rem] bg-slate-900 flex items-center justify-center text-[#db9b16] font-black text-2xl group-hover:rotate-6 transition-all duration-500 shadow-xl group-hover:shadow-[#db9b16]/20">
@@ -130,7 +130,7 @@ export default function StudentSearchSelector({ onSelect }: StudentSearchSelecto
             <h3 className="text-[12px] font-black text-slate-900 uppercase tracking-[0.5em] mb-3">
                 Sélection Requise
             </h3>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.3em] max-w-[250px] leading-relaxed">
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.3em] max-w-250 leading-relaxed">
                 Entrez les identifiants pour accéder aux dossiers académiques
             </p>
           </div>

@@ -53,7 +53,7 @@ export default function StudentAppSelector({ studentId, onAppSelect }: StudentAp
             <Fingerprint className="text-slate-200" size={40} />
         </div>
         <h3 className="text-slate-900 font-black text-xs uppercase tracking-[0.3em] italic">Archive Vide</h3>
-        <p className="text-slate-400 text-[10px] font-bold mt-3 uppercase leading-loose tracking-widest max-w-[280px] mx-auto opacity-70">
+        <p className="text-slate-400 text-[10px] font-bold mt-3 uppercase leading-loose tracking-widest max-w-280 mx-auto opacity-70">
             Aucun processus d'admission n'a été détecté pour cet identifiant.
         </p>
       </div>
@@ -84,7 +84,7 @@ export default function StudentAppSelector({ studentId, onAppSelect }: StudentAp
 
             <div className="flex items-center gap-8 relative z-10">
               {/* Conteneur Icône Premium */}
-              <div className="h-20 w-20 bg-slate-900 rounded-[2rem] flex items-center justify-center text-[#db9b16] group-hover:scale-105 transition-all duration-500 shadow-xl group-hover:shadow-[#db9b16]/20">
+              <div className="h-20 w-20 bg-slate-900 rounded-4xl flex items-center justify-center text-[#db9b16] group-hover:scale-105 transition-all duration-500 shadow-xl group-hover:shadow-[#db9b16]/20">
                 <FileText size={32} strokeWidth={2} />
               </div>
 
@@ -127,7 +127,7 @@ export default function StudentAppSelector({ studentId, onAppSelect }: StudentAp
             </div>
 
             {/* Bouton d'entrée Stylisé */}
-            <div className="relative z-10 h-16 w-16 rounded-[2rem] bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-slate-900 group-hover:text-[#db9b16] group-hover:rotate-90 transition-all duration-500 border border-slate-100 group-hover:border-slate-900">
+            <div className="relative z-10 h-16 w-16 rounded-4xl bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-slate-900 group-hover:text-[#db9b16] group-hover:rotate-90 transition-all duration-500 border border-slate-100 group-hover:border-slate-900">
               <ChevronRight size={32} strokeWidth={2.5} />
             </div>
           </button>

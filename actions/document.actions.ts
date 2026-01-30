@@ -43,7 +43,7 @@ export async function uploadDocumentAction(formData: FormData) {
     const extension = file.name.split('.').pop() || 'dat';
     const safeName = `${uuidv4()}.${extension}`;
     
-    // Chemin hiérarchique : applications/ID_DOSSIER/TYPE_DOCUMENT_UUID.ext
+    // Chemin hiérarchique : applications/{ID_APPLICATION}/TYPE_DOCUMENT_UUID.ext
     const filePath = `applications/${applicationId}/${safeName}`;
 
     // 4. Upload vers le bucket Supabase "agence"

@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma"
 import { ApplicationStatus } from "@prisma/client"
 
 /**
- * Utilitaire pour synchroniser la progression avec le statut
+ *  On synchronise la progression avec le statut
  */
 const getProgress = (status: ApplicationStatus): number => {
   const map: Record<ApplicationStatus, number> = {
@@ -44,7 +44,7 @@ export const applicationService = {
         country,
         status: "DRAFT",
         progress: getProgress("DRAFT"),
-        applicationFee: feeConfig ? feeConfig.amount : 0, // On injecte le prix ici
+        applicationFee: feeConfig ? feeConfig.amount : 0, 
       }
     });
   },
@@ -62,7 +62,7 @@ export const applicationService = {
             name: true,
             city: true,
             country: true,
-            pdfUrl: true, // Crucial pour l'affichage de la carte
+            pdfUrl: true, 
             images: true
           }
         },

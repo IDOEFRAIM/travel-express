@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { SignJWT, jwtVerify } from "jose";
 
-// Clé secrète pour signer les jetons (à mettre dans ton .env)
+// Clé secrète pour signer les jetons 
 const SECRET_KEY = new TextEncoder().encode(
   process.env.JWT_SECRET || "ma_cle_secrete_super_longue_pour_le_dev"
 );

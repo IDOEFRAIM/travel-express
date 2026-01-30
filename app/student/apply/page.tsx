@@ -47,7 +47,6 @@ import { Suspense } from "react";
         toast.error(result.error);
       } else {
         toast.success("Candidature envoyée avec succès !");
-        // Optionnel : redirect ou reset form
       }
     } catch (error) {
       toast.error("Une erreur est survenue lors de l'envoi");

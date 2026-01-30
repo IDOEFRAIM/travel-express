@@ -112,7 +112,7 @@ export function ActivityList({ initialActivities }: { initialActivities: Activit
                
                <div className="space-y-0 relative ml-6">
                   {/* Vertical line with gradient */}
-                  <div className="absolute left-0 top-2 bottom-2 w-px bg-gradient-to-b from-slate-200 via-slate-100 to-transparent"></div>
+                  <div className="absolute left-0 top-2 bottom-2 w-px bg-linear-to-b from-slate-200 via-slate-100 to-transparent"></div>
 
                   {items.map((item) => {
                       const Icon = ICONS[item.type] || Bell;
@@ -122,11 +122,11 @@ export function ActivityList({ initialActivities }: { initialActivities: Activit
                       <div key={item.id} className="relative pl-10 pb-10 last:pb-0 group">
                          {/* Timeline Dot */}
                          <div className={cn(
-                             "absolute -left-[5px] top-6 h-[10px] w-[10px] rounded-full border-2 border-white ring-4 ring-white shadow-sm transition-all duration-500 group-hover:scale-150",
+                             "absolute -left-1.25 top-6 h-2.5 w-2.5 rounded-full border-2 border-white ring-4 ring-white shadow-sm transition-all duration-500 group-hover:scale-150",
                              theme.bg
                          )}></div>
                          
-                         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/40 transition-all duration-500 flex items-start gap-5">
+                         <div className="bg-white p-6 rounded-4xl border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/40 transition-all duration-500 flex items-start gap-5">
                             <div className={cn("h-14 w-14 rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:rotate-6", theme.iconBg, theme.text)}>
                                <Icon size={26} strokeWidth={2.5} />
                             </div>

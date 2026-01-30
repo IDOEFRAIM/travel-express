@@ -65,7 +65,7 @@ export function SecuritySettings() {
           <button 
             type="button"
             onClick={() => setShowCurrent(!showCurrent)}
-            className="absolute right-6 top-[54px] text-slate-300 hover:text-slate-600 transition-colors"
+            className="absolute right-6 top-13.5 text-slate-300 hover:text-slate-600 transition-colors"
           >
             {showCurrent ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>

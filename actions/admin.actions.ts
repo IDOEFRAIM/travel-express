@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
 /**
- * Vérifie si l'utilisateur est admin
+ * Pour verifier que l'user est un admin
  */
 async function requireAdmin() {
   const userId = await authService.requireUser();
@@ -17,15 +17,14 @@ async function requireAdmin() {
   });
   
   if (!user || user.role !== 'ADMIN') {
-    // Note: redirect() lève une erreur interne de Next.js pour fonctionner.
-    // Il est préférable de l'appeler en dehors d'un bloc try/catch si possible.
-    redirect('/student/dashboard');
+    // Si ce n'est pas un admin,on le redirige vers la page student
+    redirect('/student/');
   }
   return userId;
 }
 
 /**
- * Calcule le pourcentage de progression selon le statut
+ *Cette fonction nous permet de calculer le pourcentage de progression selon le statut
  */
 function getProgressFromStatus(status: ApplicationStatus): number {
   const mapping: Record<ApplicationStatus, number> = {
@@ -43,7 +42,7 @@ function getProgressFromStatus(status: ApplicationStatus): number {
 }
 
 /**
- * Action pour mettre à jour le statut
+ * Mettre a jour le statut d une application
  */
 export async function updateApplicationStatus(applicationId: string, newStatus: ApplicationStatus) {
   try {
@@ -59,10 +58,10 @@ export async function updateApplicationStatus(applicationId: string, newStatus: 
       }
     });
 
-    // Revalidation précise
+    // On s'assure de revalider les paths concernés ,cela permet de rafraichir les données côté client
     revalidatePath('/admin/dashboard');
     revalidatePath(`/admin/applications/${applicationId}`);
-    revalidatePath(`/student/dashboard`); // Pour que l'étudiant voie son nouveau statut
+    revalidatePath(`/student/${applicationId}`);
     
     return { success: true, data: updated };
   } catch (error) {
@@ -72,18 +71,17 @@ export async function updateApplicationStatus(applicationId: string, newStatus: 
 }
 
 /**
- * Action pour supprimer un dossier (Sécurisée)
+ * Action pour supprimer une application
  */
 export async function deleteApplication(applicationId: string) {
   try {
     await requireAdmin();
 
-    // 1. On utilise une transaction pour nettoyer les relations si nécessaire
-    // (Selon ton schéma, si ON DELETE CASCADE n'est pas activé sur les documents/paiements)
+    // On utilise une transaction pour nettoyer les relations si nécessaire
     await prisma.$transaction([
-      // Optionnel : nettoyer les documents si tu ne veux pas d'orphelins
+      // On s'assure de supprimer les documents liés
       prisma.document.deleteMany({ where: { applicationId } }),
-      // Supprimer l'application
+      // Puis on supprime l'application elle-même
       prisma.application.delete({ 
         where: { id: applicationId } 
       })
@@ -98,7 +96,7 @@ export async function deleteApplication(applicationId: string) {
 }
 
 /**
- * NOUVELLE ACTION : Assigner une université à une application
+ * Assigner une université à une application
  */
 export async function assignUniversity(applicationId: string, universityId: string) {
     try {

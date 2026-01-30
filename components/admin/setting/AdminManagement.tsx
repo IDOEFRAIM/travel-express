@@ -87,14 +87,14 @@ const AdminManagement = () => {
         </div>
 
         {loading ? (
-          <div className="bg-white rounded-[2rem] p-20 flex flex-col items-center justify-center border border-slate-100">
+          <div className="bg-white rounded-4xl p-20 flex flex-col items-center justify-center border border-slate-100">
              <Loader2 className="animate-spin text-[#db9b16] mb-4" size={40} strokeWidth={2.5} />
              <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Sécurisation de la liste...</p>
           </div>
         ) : (
           <div className="grid md:grid-cols-2 gap-4">
             {admins.map(admin => (
-              <div key={admin.id} className="group flex items-center justify-between p-6 bg-white rounded-[2rem] border border-slate-100 hover:border-[#db9b16]/30 transition-all shadow-sm">
+              <div key={admin.id} className="group flex items-center justify-between p-6 bg-white rounded-4xl   border border-slate-100 hover:border-[#db9b16]/30 transition-all shadow-sm">
                 <div className="flex items-center gap-5">
                   <div className="h-14 w-14 rounded-2xl bg-slate-900 text-[#db9b16] flex items-center justify-center font-black text-xl shadow-inner group-hover:scale-110 transition-transform">
                     {admin.fullName?.charAt(0).toUpperCase()}
@@ -121,7 +121,7 @@ const AdminManagement = () => {
 
       {/* MODAL PICKER */}
       {showPicker && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-6">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-100 flex items-center justify-center p-6">
           <div className="bg-white w-full max-w-xl rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-white/20">
             <div className="p-8 bg-slate-900 text-white flex justify-between items-center">
               <div>
@@ -147,9 +147,9 @@ const AdminManagement = () => {
                 />
               </div>
 
-              <div className="max-h-[350px] overflow-y-auto pr-2 space-y-2 custom-scrollbar">
+              <div className="max-h-350 overflow-y-auto pr-2 space-y-2 custom-scrollbar">
                 {filteredUsers.length > 0 ? filteredUsers.map(user => (
-                  <div key={user.id} className="flex items-center justify-between p-4 hover:bg-slate-50 rounded-[1.5rem] transition-all group border border-transparent hover:border-slate-100">
+                  <div key={user.id} className="flex items-center justify-between p-4 hover:bg-slate-50 rounded-3xl transition-all group border border-transparent hover:border-slate-100">
                     <div className="flex items-center gap-4">
                         <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-slate-900 group-hover:text-[#db9b16] transition-colors">
                             <UserIcon size={18} />

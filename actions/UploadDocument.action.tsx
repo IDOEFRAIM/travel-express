@@ -13,7 +13,7 @@ export async function uploadDocumentAction(formData: FormData) {
   let uploadedPath: string | null = null; // Pour le rollback en cas d'erreur
 
   try {
-    // 0. SÉCURITÉ : Vérification de la session
+    //On commence par l'origine:-) 0. SÉCURITÉ : Vérification de la session
     const userId = await authService.requireUser();
     
     const applicationId = formData.get('applicationId') as string;
@@ -71,7 +71,7 @@ export async function uploadDocumentAction(formData: FormData) {
           applicationId,
           name: file.name,
           type: type || "AUTRE",
-          url: publicUrlData.publicUrl, // Ou stocke 'filePath' si tu préfères générer l'URL au runtime
+          url: publicUrlData.publicUrl, 
           status: "PENDING"
         }
       });

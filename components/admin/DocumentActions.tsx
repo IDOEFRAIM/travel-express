@@ -37,7 +37,6 @@ export function DocumentActions({ id, currentStatus }: DocumentActionsProps) {
         <span className="text-emerald-700 text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-emerald-100 rounded-full flex items-center gap-1.5 animate-in zoom-in-95">
           <Check size={12} strokeWidth={3} /> Validé
         </span>
-        {/* Optionnel: bouton pour réinitialiser le statut */}
       </div>
     );
   }

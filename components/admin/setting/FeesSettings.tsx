@@ -72,12 +72,11 @@ export function FeesSettings() {
 
   return (
     <div className="space-y-10">
-      {/* ... TON HEADER EXISTANT ... */}
 
       {/* FORMULAIRE D'AJOUT */}
-      <form id="fee-form" action={handleSubmit} className="relative group p-1 rounded-[2.5rem] bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 shadow-sm">
+      <form id="fee-form" action={handleSubmit} className="relative group p-1 rounded-[2.5rem] bg-linear-to-r from-slate-100 via-slate-50 to-slate-100 shadow-sm">
         <div className="bg-white rounded-[2.3rem] p-6 flex flex-wrap gap-6 items-end">
-          <div className="flex-1 min-w-[240px] space-y-3">
+          <div className="flex-1 min-w-240 space-y-3">
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Destination</label>
             <div className="relative">
               <Globe size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-[#db9b16]" />
@@ -91,7 +90,7 @@ export function FeesSettings() {
               <input name="amount" type="number" placeholder="0.00" className="w-full bg-slate-50 border-none focus:ring-2 focus:ring-[#db9b16]/20 rounded-2xl p-4 pl-14 font-bold text-slate-700 placeholder:text-slate-300 transition-all" required />
             </div>
           </div>
-          <Button disabled={isPending} className="h-[60px] px-8 bg-slate-900 hover:bg-[#db9b16] text-white rounded-2xl font-black uppercase tracking-[0.2em] transition-all">
+          <Button disabled={isPending} className="h-60 px-8 bg-slate-900 hover:bg-[#db9b16] text-white rounded-2xl font-black uppercase tracking-[0.2em] transition-all">
             {isPending ? <Loader2 className="animate-spin" /> : <Plus className="mr-2" size={20} strokeWidth={3} />}
             Ajouter
           </Button>
@@ -106,7 +105,7 @@ export function FeesSettings() {
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Chargement...</p>
           </div>
         ) : fees.map((fee) => (
-          <div key={fee.id} className="group flex items-center justify-between p-4 bg-white border border-slate-100 rounded-[2rem] hover:shadow-xl transition-all">
+          <div key={fee.id} className="group flex items-center justify-between p-4 bg-white border border-slate-100 rounded-4xl hover:shadow-xl transition-all">
             <div className="flex items-center gap-5">
               <div className="h-16 w-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 font-black text-xl group-hover:bg-[#db9b16]/10 group-hover:text-[#db9b16] transition-all">
                 {fee.country.substring(0, 2).toUpperCase()}

@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Loader2, ArrowRight, Globe } from "lucide-react";
 
 interface ApplyButtonProps {
-  countryName: string; // On utilise le nom du pays ici
+  countryName: string; 
   isConnected: boolean;
   className?: string;
   children?: React.ReactNode;
@@ -29,7 +29,6 @@ export function ApplyButton({ countryName, isConnected, className, children }: A
 
     startTransition(async () => {
       try {
-        // --- RÉSOLUTION DE L'ERREUR TYPESCRIPT ---
         const data = new FormData();
         data.append("country", countryName); 
         
@@ -44,7 +43,6 @@ export function ApplyButton({ countryName, isConnected, className, children }: A
     });
   };
 
-  // Si le bouton entoure une carte ou un contenu spécifique
   if (children) {
     return (
       <div 

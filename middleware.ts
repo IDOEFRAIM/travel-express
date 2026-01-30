@@ -39,12 +39,13 @@ export async function proxy(request: NextRequest) {
         }
     }
 
-    // 3. SI DÉJÀ CONNECTÉ -> On interdit de retourner sur /login
+    // 3. S'il est deja connecte' -> On empeche de retourner sur /login
     if (isAuthPage && sessionCookie) {
         try {
             await jwtVerify(sessionCookie, SECRET_KEY);
-            return NextResponse.redirect(new URL('/student/dashboard', request.url));
+            return NextResponse.redirect(new URL('/student/', request.url));
         } catch (e) {
+            console.error("Session cookie invalid during auth page access:", e);
             // Si le token est mort, on laisse l'utilisateur sur /login
         }
     }

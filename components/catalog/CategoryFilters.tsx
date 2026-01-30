@@ -1,7 +1,6 @@
 'use client';
-
+///Ce fichier n est presentement est utile. Il servira a implementer des filtres par categories dans le futur.
 import { useRouter, useSearchParams } from 'next/navigation';
-import { cn } from '@/lib/utils'; // Assuming you have a utils file, or I'll just use standard template literals if not sure
 
 const FILTERS = [
   { label: 'Tout', value: 'all' },

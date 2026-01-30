@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { logoutAction } from "@/actions/logout.action";
 import { useRouter } from "next/navigation";
 import { User, LogOut, FileText, Globe } from "lucide-react";
-import { cn } from "@/lib/utils"; // Import de l'utilitaire cn
+import { cn } from "@/lib/utils"; 
 
 interface NavbarProps {
   isConnected: boolean;
@@ -84,7 +84,7 @@ console.log("DEBUG LAYOUT - Role:", userRole, "IsAdmin:", isAdmin);
                 </div>
               </Link>
 
-              <div className="w-[1px] h-4 bg-slate-200 mx-1" />
+              <div className="w-px h-4 bg-slate-200 mx-1" />
 
               <button 
                 onClick={handleLogout}

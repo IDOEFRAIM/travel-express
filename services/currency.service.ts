@@ -4,7 +4,7 @@ const RATES = {
   XOF: 1,
   EUR: 655.957, 
   USD: 600,     
-  GNF: 0.070,   // Exemple : Franc Guinéen
+  GNF: 0.070,   
 } as const;
 
 export type Currency = keyof typeof RATES;

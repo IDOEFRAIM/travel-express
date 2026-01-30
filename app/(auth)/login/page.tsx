@@ -86,7 +86,7 @@ export default function LoginPage() {
             <Button 
               type="submit" 
               isLoading={isPending}
-              variant="glow" // Utilise déjà #db9b16 suite à notre mise à jour du composant Button
+              variant="glow" 
               size="lg"
               className="w-full shadow-[#db9b16]/20 font-bold py-6 text-base"
             >

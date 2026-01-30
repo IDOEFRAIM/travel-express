@@ -2,12 +2,10 @@ import Link from 'next/link';
 import { prisma } from "@/lib/prisma"
 import { redirect } from "next/navigation"
 import { 
-  LogOut, 
   GraduationCap, 
   Flag, 
   Plus,
   ArrowRight,
-  LayoutDashboard,
   CircleDot,
   Globe2,
   Compass,

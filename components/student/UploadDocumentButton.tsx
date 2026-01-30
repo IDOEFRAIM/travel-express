@@ -53,7 +53,7 @@ export function UploadDocumentButton({ applicationId, className }: { application
     try {
       // On s'assure que les données sont bien présentes
       formData.set('applicationId', applicationId);
-      formData.set('file', file); // On force le fichier actuel
+      formData.set('file', file); 
 
       const result = await uploadDocumentAction(formData);
 
@@ -94,7 +94,7 @@ export function UploadDocumentButton({ applicationId, className }: { application
       </Button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-md bg-slate-900/60 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-4 backdrop-blur-md bg-slate-900/60 animate-in fade-in duration-200">
           <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300">
             
             <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">

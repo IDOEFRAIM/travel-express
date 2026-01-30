@@ -1,4 +1,3 @@
-// @/components/settings/index.ts
 
 /**
  * Composant principal de la vue Settings
@@ -13,7 +12,7 @@ export { SecuritySettings } from './SecuritySetting';
 export { FeesSettings } from './FeesSettings';
 
 /**
- * Si vous avez un composant AdminManagement dans le même dossier
+ *  composant AdminManagement 
  */
 export { default as AdminManagement } from './AdminManagement';
 

@@ -1,12 +1,19 @@
-import type { NextConfig } from "next";
+const withPWA = require('next-pwa')({
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === 'development',
+});
 
-const nextConfig: NextConfig = {
-  /* config options here */
+const nextConfig = withPWA({
   experimental: {
     serverActions: {
-      bodySizeLimit: '20mb', // Limite augmentée pour upload fichiers volumineux
+      bodySizeLimit: '20mb',
     },
   },
-};
+  // Configuration explicite pour satisfaire Turbopack (Next.js 16)
+  // Cela confirme que nous acceptons d'utiliser Webpack config (de next-pwa) avec Turbopack
+  turbopack: {},
+});
 
-export default nextConfig;
+module.exports = nextConfig;

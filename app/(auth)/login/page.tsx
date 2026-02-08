@@ -105,12 +105,20 @@ export default function LoginPage() {
               <p className="font-bold text-slate-700 mb-3 uppercase tracking-widest">Comptes de démo :</p>
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                   <span className="font-medium">Étudiant</span>
-                   <span className="font-mono bg-white px-2 py-1 rounded border border-slate-200">etudiant@test.com</span>
+                   <span className="font-medium">student_manager@gmail.com</span>
+                   <span className="font-mono bg-white px-2 py-1 rounded border border-slate-200">student_manager</span>
+                </div>
+                                <div className="flex justify-between items-center">
+                   <span className="font-medium">secretaire@gmail.com</span>
+                   <span className="font-mono bg-white px-2 py-1 rounded border border-slate-200">secretaire</span>
+                </div>
+                                <div className="flex justify-between items-center">
+                   <span className="font-medium">qualite@agence.com</span>
+                   <span className="font-mono bg-white px-2 py-1 rounded border border-slate-200">staff123</span>
                 </div>
                  <div className="flex justify-between items-center">
-                   <span className="font-medium">Admin</span>
-                   <span className="font-mono bg-white px-2 py-1 rounded border border-slate-200 text-[#db9b16]">admin@travelexpress.com</span>
+                   <span className="font-medium">admin@agence.com</span>
+                   <span className="font-mono bg-white px-2 py-1 rounded border border-slate-200 text-[#db9b16]">admin123</span>
                 </div>
               </div>
           </div>

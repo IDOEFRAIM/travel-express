@@ -75,9 +75,23 @@ export default function AdminUniversitiesPage() {
             <p className="font-bold text-xs uppercase tracking-widest">Chargement du catalogue...</p>
           </div>
         ) : error ? (
-          <div className="bg-red-50 text-red-600 p-6 rounded-3xl border border-red-100 font-bold text-center">
-            Une erreur est survenue lors de la récupération des données.
-          </div>
+          (() => {
+            const isForbidden = axios.isAxiosError(error) && error.response?.status === 403;
+            const errorMessage = isForbidden
+              ? error.response?.data?.message || "Vous n'avez pas la permission d'accéder au catalogue des universités."
+              : "Une erreur est survenue lors de la récupération des données.";
+            return (
+              <div className={isForbidden ? "bg-red-50 text-red-600 p-10 rounded-3xl border border-red-100 font-bold text-center flex flex-col items-center justify-center gap-6" : "bg-red-50 text-red-600 p-6 rounded-3xl border border-red-100 font-bold text-center"}>
+                {isForbidden && <School size={48} className="mx-auto text-red-200 mb-4" />}
+                <span>{errorMessage}</span>
+                {isForbidden && (
+                  <Link href="/admin/dashboard" className="mt-4 inline-block bg-slate-950 text-white rounded-2xl px-10 py-6 font-black uppercase text-xs tracking-widest hover:bg-[#db9b16] transition-all">
+                    Retour au Dashboard
+                  </Link>
+                )}
+              </div>
+            );
+          })()
         ) : (
           Object.entries(groupedUniversities).map(([country, unis]: [string, any]) => (
             <div key={country} className="mb-16">

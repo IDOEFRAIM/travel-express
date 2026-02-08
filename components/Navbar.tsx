@@ -22,8 +22,8 @@ const Navbar = ({ isConnected, userRole, userName }: NavbarProps) => {
     router.refresh();
   };
 
-  // Condition : si c'est un admin, on cache complètement la barre
-  const isAdmin = userRole === "ADMIN";
+  // Condition : si c'est un admin (tout rôle non-STUDENT), on cache complètement la barre
+  const isAdmin = !!userRole && userRole !== "STUDENT";
 console.log("DEBUG LAYOUT - Role:", userRole, "IsAdmin:", isAdmin);
 
   return (

@@ -6,117 +6,98 @@ import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 
 /**
- * Mise à jour des informations de base du profil
+ * Récupère l'utilisateur courant avec son rôle
+ */
+export async function getCurrentUserAction() {
+  const userId = await authService.requireUser();
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      email: true,
+      fullName: true,
+      phone: true,
+      passportNumber: true,
+      specificDiseases: true,
+      medicalHistory: true,
+      role: { select: { name: true, permissions: true } },
+      createdAt: true,
+    },
+  });
+
+  return user;
+}
+
+/**
+ * Met à jour le profil utilisateur
  */
 export async function updateProfileAction(formData: FormData) {
+  const userId = await authService.requireUser();
+
+  const fullName = formData.get('fullName') as string;
+  const email = formData.get('email') as string;
+  const phone = formData.get('phone') as string;
+
   try {
-    const userId = await authService.requireUser();
-    
-    const fullName = (formData.get('fullName') as string)?.trim();
-    const email = (formData.get('email') as string)?.toLowerCase().trim();
-    const phone = (formData.get('phone') as string)?.trim();
-
-    if (!fullName || !email) {
-      return { success: false, error: "Le nom et l'email sont requis." };
-    }
-
-    // Vérifier si l'email est déjà pris par un autre utilisateur
-    const emailExists = await prisma.user.findFirst({
-      where: { email, NOT: { id: userId } }
-    });
-
-    if (emailExists) {
-      return { success: false, error: "Cet email est déjà utilisé par un autre compte." };
-    }
-
     await prisma.user.update({
       where: { id: userId },
-      data: { fullName, email, phone }
+      data: { fullName, email, phone },
     });
 
-    // On rafraîchit les layouts et les dashboards
-    revalidatePath('/', 'layout'); 
-    revalidatePath('/student/dashboard');
     revalidatePath('/admin/settings');
-    
+    revalidatePath('/student/dashboard');
     return { success: true };
   } catch (error) {
     console.error("Update Profile Error:", error);
-    return { success: false, error: "Impossible de mettre à jour le profil." };
+    return { success: false, error: "Impossible de mettre à jour le profil" };
   }
 }
 
 /**
- * Changement de mot de passe avec support hybride
+ * Changer le mot de passe
  */
 export async function updatePasswordAction(formData: FormData) {
+  const userId = await authService.requireUser();
+
+  const currentPassword = formData.get('currentPassword') as string;
+  const newPassword = formData.get('newPassword') as string;
+  const confirmPassword = formData.get('confirmPassword') as string;
+
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    return { success: false, error: "Tous les champs sont requis." };
+  }
+
+  if (newPassword.length < 6) {
+    return { success: false, error: "Le nouveau mot de passe doit faire au moins 6 caractères." };
+  }
+
+  if (newPassword !== confirmPassword) {
+    return { success: false, error: "Les mots de passe ne correspondent pas." };
+  }
+
   try {
-    const userId = await authService.requireUser();
-    const currentPassword = formData.get('currentPassword') as string;
-    const newPassword = formData.get('newPassword') as string;
-    const confirmPassword = formData.get('confirmPassword') as string;
-
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      return { success: false, error: "Tous les champs sont requis." };
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return { success: false, error: "Utilisateur introuvable." };
     }
 
-    if (newPassword !== confirmPassword) {
-      return { success: false, error: "La confirmation ne correspond pas au nouveau mot de passe." };
+    // Vérifier l'ancien mot de passe
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) {
+      return { success: false, error: "Mot de passe actuel incorrect." };
     }
 
-    if (newPassword.length < 8) {
-      return { success: false, error: "Le nouveau mot de passe doit contenir au moins 8 caractères." };
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { password: true }
-    });
-
-    if (!user || !user.password) return { success: false, error: "Utilisateur non trouvé." };
-
-    // Logique hybride (Bcrypt ou Texte clair)
-    const isBcrypt = user.password.startsWith('$2');
-    const isCorrect = isBcrypt 
-      ? await bcrypt.compare(currentPassword, user.password)
-      : currentPassword === user.password;
-
-    if (!isCorrect) {
-      return { success: false, error: "Le mot de passe actuel est incorrect." };
-    }
-
-    // On hache systématiquement le nouveau mot de passe
-    const hashed = await bcrypt.hash(newPassword, 12);
+    // Hasher et sauvegarder le nouveau
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
     await prisma.user.update({
       where: { id: userId },
-      data: { password: hashed }
+      data: { password: hashedPassword },
     });
 
     return { success: true };
   } catch (error) {
-    console.error("Password Update Error:", error);
-    return { success: false, error: "Une erreur technique est survenue." };
-  }
-}
-
-/**
- * Récupération de l'utilisateur actuel
- */
-export async function getCurrentUserAction() {
-  try {
-    const userId = await authService.requireUser();
-    return await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        fullName: true,
-        email: true,
-        phone: true,
-        role: true,
-        createdAt: true
-      }
-    });
-  } catch (error) {
-    return null;
+    console.error("Update Password Error:", error);
+    return { success: false, error: "Impossible de changer le mot de passe." };
   }
 }

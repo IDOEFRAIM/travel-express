@@ -10,12 +10,31 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// --- ENUMÉRATIONS ---
+// --- IAM STYLE AWS (Identity & Access Management) ---
 
-enum Role {
-  ADMIN
-  STUDENT
+model Role {
+  id          String       @id @default(cuid())
+  name        String       @unique // ex: "SUPERADMIN", "STUDENT_MANAGER", "QUALITY_OFFICER"
+  description String?
+  permissions Permission[]
+  users       User[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 }
+
+enum Permission {
+  ALL_ACCESS            // SuperAdmin
+  MANAGE_STUDENTS       // Admin Etudiants
+  VIEW_STUDENTS
+  MANAGE_DOCUMENTS      // Admin Qualité/Docs
+  VALIDATE_DOCUMENTS    
+  MANAGE_DISCUSSIONS    // Admin Discussions
+  VIEW_FINANCES
+  MANAGE_FINANCES
+  MANAGE_UNIVERSITIES
+}
+
+// --- ENUMÉRATIONS EXISTANTES ---
 
 enum ApplicationStatus {
   DRAFT
@@ -50,28 +69,46 @@ enum DocumentStatus {
   REJECTED
 }
 
-// --- UTILISATEURS ---
+// --- UTILISATEURS & IAM ---
 
 model User {
-  id               String        @id @default(cuid())
-  email            String        @unique
+  id               String    @id @default(cuid())
+  email            String    @unique
   password         String 
   fullName         String? 
   phone            String?
-  role             Role          @default(STUDENT)
-  
-  // Profil médical & Documents
+
+  // IAM Link
+  roleId           String
+  role             Role      @relation(fields: [roleId], references: [id])
+  isActive         Boolean   @default(true)
+
+  // Session Management (pour invalidation automatique)
+  sessionVersion   Int       @default(1)
+
+  // PWA Support
+  pushToken        String?   // Pour les notifications Firebase/VAPID
+  lastLogin        DateTime?
+
+  // Profil médical
   passportNumber   String?       
-  specificDiseases String[]      @default([])
-  medicalHistory   String[]      @default([]) 
+  specificDiseases String[]  @default([])
+  medicalHistory   String[]  @default([]) 
   
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   // Relations
   applications     Application[]
   payments         Payment[]
   activityLogs     ActivityLog[] @relation("AdminActivityLogs")
+  
+  // Messagerie
+  sentMessages     Message[]     @relation("SentMessages")
+  conversations    ConversationParticipant[]
+  
+  // Audit Qualité
+  verifiedDocs     Document[]    @relation("Verifier")
 }
 
 // --- DOSSIERS DE CANDIDATURE ---
@@ -81,34 +118,82 @@ model Application {
   userId          String
   user            User              @relation(fields: [userId], references: [id])
   
-  // Détails de la demande
   country         String            @default("Chine") 
   universityId    String? 
   university      University?       @relation(fields: [universityId], references: [id])
   desiredProgram  String?
   
-  // État du dossier (Le Stepper)
   status          ApplicationStatus @default(DRAFT)
   progress        Int               @default(0)
   rejectionReason String?           @db.Text
 
-  // Finances du dossier
   applicationFee  Float             @default(500000)
   
-  // Données spécifiques au dossier (pour archivage)
-  passportNumber  String?           
-  medicalHistory  String?           @db.Text 
-
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 
-  // Relations
   documents       Document[]
   payments        Payment[]
-  paymentStatus PaymentStatus @default(PENDING)
+  paymentStatus   PaymentStatus     @default(PENDING)
+  
+  // Tracking des discussions liées au dossier
+  conversation    Conversation?
 }
 
-// --- UNIVERSITÉS ---
+// --- DOCUMENTS (Avec Audit Qualité) ---
+
+model Document {
+  id              String         @id @default(cuid())
+  applicationId   String
+  application     Application    @relation(fields: [applicationId], references: [id])
+  type            String         // Ex: "PASSPORT", "DIPLOMA"
+  name            String
+  url             String
+  status          DocumentStatus @default(PENDING)
+  
+  // Champ Qualité : Qui a vérifié ce document ?
+  verifiedById    String?
+  verifiedBy      User?          @relation("Verifier", fields: [verifiedById], references: [id])
+  comment         String?        // Note de l'admin qualité en cas de rejet
+  
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+// --- MESSAGERIE (Pour Admin Discussions) ---
+
+model Conversation {
+  id            String    @id @default(cuid())
+  applicationId String?   @unique
+  application   Application? @relation(fields: [applicationId], references: [id])
+  subject       String?
+  messages      Message[]
+  participants  ConversationParticipant[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model ConversationParticipant {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+  lastRead       DateTime     @default(now())
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  senderId       String
+  sender         User         @relation("SentMessages", fields: [senderId], references: [id])
+  content        String       @db.Text
+  attachments    String[]     // URLs des fichiers envoyés en chat
+  createdAt      DateTime     @default(now())
+}
+
+// --- UNIVERSITÉS & FINANCES ---
 
 model University {
   id           String        @id @default(cuid())
@@ -119,8 +204,8 @@ model University {
   description  String?       @db.Text
   costRange    String?
   programs     String?
-  images       String[]      // Tableau d'URLs
-  imageUrl     String?       // Image principale
+  images       String[]      
+  imageUrl     String?       
   pdfUrl       String?
   createdAt    DateTime      @default(now())
 
@@ -128,29 +213,12 @@ model University {
   payments     Payment[]
 }
 
-// --- DOCUMENTS ---
-
-model Document {
-  id            String         @id @default(cuid())
-  applicationId String
-  application   Application    @relation(fields: [applicationId], references: [id])
-  type          String         // Ex: "PASSPORT", "DIPLOMA"
-  name          String
-  url           String
-  status        DocumentStatus @default(PENDING)
-  createdAt     DateTime       @default(now())
-}
-
-// --- FINANCES ---
-
 model Payment {
   id            String        @id @default(cuid())
   userId        String
   user          User          @relation(fields: [userId], references: [id])
-  
   applicationId String?       
   application   Application?  @relation(fields: [applicationId], references: [id])
-  
   universityId  String?
   university    University?   @relation(fields: [universityId], references: [id])
 
@@ -162,35 +230,21 @@ model Payment {
   createdAt     DateTime      @default(now())
 }
 
+model ActivityLog {
+  id          String   @id @default(cuid())
+  adminId     String
+  action      String   // ex: "VALIDATED_PASSPORT", "REJECTED_APPLICATION"
+  targetType  String?
+  targetId    String?
+  details     String?
+  createdAt   DateTime @default(now())
+  admin       User     @relation("AdminActivityLogs", fields: [adminId], references: [id])
+}
+
 model FeesByCountry {
   id        String   @id @default(cuid())
   country   String   @unique 
   amount    Float    
   currency  String   @default("XOF")
   updatedAt DateTime @updatedAt
-}
-
-// --- LOGS & ACTIVITÉ ---
-
-model Activity {
-  id          String   @id @default(cuid())
-  type        String
-  title       String
-  description String
-  date        DateTime @default(now())
-  user        String
-  color       String
-  refId       String?
-}
-
-model ActivityLog {
-  id          String   @id @default(cuid())
-  adminId     String
-  action      String
-  targetType  String?
-  targetId    String?
-  details     String?
-  createdAt   DateTime @default(now())
-
-  admin       User     @relation("AdminActivityLogs", fields: [adminId], references: [id])
 }

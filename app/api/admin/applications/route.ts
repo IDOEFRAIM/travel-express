@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAdminWithPermission } from "@/lib/permissions";
 
 export async function GET(req: Request) {
+  const admin = await requireAdminWithPermission(["MANAGE_STUDENTS", "VIEW_STUDENTS", "MANAGE_DOCUMENTS"]);
+  if (!admin) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
+  }
   const { searchParams } = new URL(req.url);
   const userId = searchParams.get("userId");
 
@@ -28,8 +33,8 @@ export async function GET(req: Request) {
       orderBy: { createdAt: "desc" },
     });
 
-    // Note : Les champs 'country', 'passportNumber' et 'medicalHistory' 
-    // sont déjà inclus dans l'objet 'application' car ce sont des colonnes directes.
+    // Note : 'passportNumber' et 'medicalHistory' sont sur le modèle User, pas Application.
+    // Ils sont accessibles via application.user.passportNumber etc.
     
     return NextResponse.json({ applications });
   } catch (error) {

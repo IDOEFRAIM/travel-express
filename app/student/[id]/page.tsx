@@ -9,6 +9,8 @@ import {
 } from "lucide-react"
 import { getFileUrl } from '@/lib/storage';
 import { UploadDocumentButton } from "@/components/student/UploadDocumentButton";
+import { UniversityImage } from "@/components/student/UniversityImage";
+import { MessageBox } from "@/components/student/MessageBox";
 import { cn } from "@/lib/utils";
 
 const TIMELINE_STEPS = [
@@ -40,7 +42,7 @@ export default async function ApplicationDetail({ params }: { params: Promise<{ 
       <p className="text-slate-500 mb-8 max-w-md">
         Le dossier <span className="font-mono text-[#db9b16]">{id}</span> n'existe pas ou n'est pas lié à votre compte actuel (<span className="font-mono">{userId}</span>).
       </p>
-      <Link href="/student/dashboard" className="px-8 py-4 bg-slate-950 text-white rounded-2xl font-black uppercase text-xs tracking-widest">
+      <Link href="/student/" className="px-8 py-4 bg-slate-950 text-white rounded-2xl font-black uppercase text-xs tracking-widest">
         Retour au Dashboard
       </Link>
     </div>
@@ -168,16 +170,21 @@ export default async function ApplicationDetail({ params }: { params: Promise<{ 
                   <div className="flex items-center gap-6 mb-10">
                     <div className="h-20 w-20 shrink-0 rounded-[2rem] overflow-hidden bg-white flex items-center justify-center border-4 border-white/5 relative shadow-2xl">
                       {app.university?.imageUrl ? (
-                        <img 
-                          src={app.university.imageUrl} 
-                          alt={app.university.name} 
+                        <UniversityImage
+                          src={app.university.imageUrl}
+                          alt={app.university.name}
                           className="w-full h-full object-cover relative z-10"
-                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                          fallback={
+                            <div className="absolute inset-0 flex items-center justify-center text-slate-950 font-black text-2xl bg-[#db9b16]">
+                              {app.university?.name?.charAt(0) || "U"}
+                            </div>
+                          }
                         />
-                      ) : null}
-                      <div className="absolute inset-0 flex items-center justify-center text-slate-950 font-black text-2xl bg-[#db9b16]">
-                        {app.university?.name?.charAt(0) || "U"}
-                      </div>
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-slate-950 font-black text-2xl bg-[#db9b16]">
+                          {app.university?.name?.charAt(0) || "U"}
+                        </div>
+                      )}
                     </div>
 
                     <div className="min-w-0">
@@ -259,6 +266,13 @@ export default async function ApplicationDetail({ params }: { params: Promise<{ 
 
               <UploadDocumentButton applicationId={app.id} className="w-full bg-slate-950 hover:bg-[#db9b16] text-white py-7 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] transition-all shadow-2xl shadow-slate-200 active:scale-95 flex items-center justify-center gap-3" />
             </div>
+
+            {/* MESSAGERIE AVEC L'AGENCE */}
+            <MessageBox 
+              applicationId={app.id} 
+              currentUserId={userId} 
+              className="min-h-[600px]"
+            />
 
             {/* WHATSAPP CTA PREMIUM */}
             <Link 

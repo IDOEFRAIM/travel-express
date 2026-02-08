@@ -1,11 +1,20 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAdminWithPermission } from "@/lib/permissions";
 
 export async function GET() {
+  const admin = await requireAdminWithPermission(["MANAGE_STUDENTS", "VIEW_STUDENTS"]);
+  if (!admin) {
+    return NextResponse.json({ 
+      error: "Accès refusé",
+      message: "Vous n'avez pas les permissions nécessaires pour voir la liste des étudiants. Contactez un administrateur si vous pensez qu'il s'agit d'une erreur."
+    }, { status: 403 });
+  }
+
   try {
     const users = await prisma.user.findMany({
       where: {
-        role: 'STUDENT',
+        role: { name: 'STUDENT' },
       },
       select: {
         id: true,

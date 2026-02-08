@@ -1,14 +1,23 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAdminWithPermission } from "@/lib/permissions";
 
-// api/universities/route.ts
 export async function GET() {
+  const admin = await requireAdminWithPermission(["MANAGE_UNIVERSITIES"]);
+  if (!admin) {
+    return NextResponse.json({
+      error: "Accès refusé",
+      message: "Vous n'avez pas la permission de consulter le catalogue des universités."
+    }, { status: 403 });
+  }
+
+  let universities;
   try {
-    const universities = await prisma.university.findMany({
-      orderBy: { name: 'asc' } // Petit bonus : tri alphabétique pour l'admin
+    universities = await prisma.university.findMany({
+      orderBy: { name: 'asc' }
     });
-    return NextResponse.json(universities); // On renvoie directement le tableau
   } catch (error) {
     return NextResponse.json({ error: "Erreur" }, { status: 500 });
   }
+  return NextResponse.json(universities);
 }

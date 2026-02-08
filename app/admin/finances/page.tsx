@@ -7,13 +7,16 @@ import { useRouter } from "next/navigation";
 import { 
   TrendingUp, Plus, Calendar, 
   Loader2, ArrowRight, Wallet,
-  BadgeCent
+  BadgeCent,
+  ShieldAlert
 } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import Link from "next/link";
 
 export default function AdminFinancesPage() {
   const router = useRouter();
 
-  const { data: finances = [], isLoading, isError } = useQuery({
+  const { data: finances = [], isLoading, isError, error } = useQuery({
     queryKey: ["adminFinances"],
     queryFn: async () => {
       const res = await axios.get("/api/admin/finances");
@@ -43,12 +46,31 @@ export default function AdminFinancesPage() {
     </div>
   );
 
-  if (isError) return (
-    <div className="min-h-screen flex flex-col items-center justify-center text-red-500">
-      <p className="font-black uppercase tracking-widest">Erreur de chargement des flux</p>
-      <button onClick={() => window.location.reload()} className="mt-4 text-xs underline">Réessayer</button>
-    </div>
-  );
+  if (isError) {
+    const isForbidden = axios.isAxiosError(error) && error.response?.status === 403;
+    const errorMessage = isForbidden 
+      ? error.response?.data?.message || "Vous n'avez pas accès aux données financières." 
+      : "Erreur lors du chargement des flux financiers.";
+
+    return (
+      <div className="min-h-screen bg-[#fcfcfd] flex flex-col items-center justify-center p-12 text-center">
+        <div className="w-20 h-20 bg-red-50 text-red-500 rounded-[2rem] flex items-center justify-center mb-6 shadow-xl shadow-red-500/10">
+          <ShieldAlert size={40} />
+        </div>
+        <h2 className="text-3xl font-black text-slate-950 uppercase italic tracking-tighter mb-4">
+          {isForbidden ? "Accès Restreint" : "Oups !"}
+        </h2>
+        <p className="text-slate-500 max-w-lg mb-10 font-medium leading-relaxed">
+          {errorMessage}
+        </p>
+        <Link href="/admin/dashboard">
+          <Button className="bg-slate-950 text-white rounded-2xl px-10 py-6 font-black uppercase text-xs tracking-widest hover:bg-[#db9b16] transition-all">
+            Retour au Dashboard
+          </Button>
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#fcfcfd] py-12 px-6">

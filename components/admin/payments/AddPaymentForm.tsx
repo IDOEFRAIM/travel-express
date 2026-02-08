@@ -133,6 +133,7 @@ export default function AddPaymentForm({ applicationId, onSuccess, onCancel }: A
                 required
                 placeholder="0.00"
                 className="w-full pl-14 pr-6 py-5 bg-slate-50 border-2 border-transparent focus:border-[#db9b16]/30 focus:bg-white rounded-2xl outline-none transition-all font-black text-2xl tracking-tighter shadow-inner"
+                min="0"
                 value={form.amount}
                 onChange={(e) => setForm({...form, amount: e.target.value})}
               />

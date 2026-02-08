@@ -1,189 +1,181 @@
-'use server'
+'use server';
 
-import { authService } from "@/services/auth.service"
-import { redirect } from "next/navigation"
-import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/prisma";
+import { applicationService } from "@/services/application.service";
+import { authService } from "@/services/auth.service";
+import { requireAdminAction } from "@/lib/permissions";
 import { ApplicationStatus } from "@prisma/client";
+import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 /**
- * cette function sert a synchroniser la progression avec le statut
+ * Créer un dossier de candidature (côté étudiant)
+ * Accepte un FormData avec au minimum : country
+ * Optionnellement : fullName, passportNumber, diseases[]
  */
-function getProgressFromStatus(status: ApplicationStatus): number {
-    const mapping: Record<ApplicationStatus, number> = {
-        'DRAFT': 10,
-        'SUBMITTED': 20,
-        'UNDER_REVIEW': 40,
-        'ACCEPTED': 60,
-        'JW202_RECEIVED': 70,
-        'VISA_GRANTED': 90,
-        'FLIGHT_BOOKED': 95,
-        'COMPLETED': 100,
-        'REJECTED': 0 
-    };
-    return mapping[status] || 0;
-}
-
-/**
- * on assigne une université à un application
- */
-export async function assignUniversityAction(applicationId: string, universityId: string) {
+export async function createApplicationAction(formData: FormData) {
   try {
-    await prisma.application.update({
-      where: { id: applicationId },
-      data: { 
-        universityId,
-        status: 'UNDER_REVIEW',
-        progress: getProgressFromStatus('UNDER_REVIEW')
+    const userId = await authService.requireUser();
+    const country = formData.get('country') as string;
+
+    if (!country) {
+      return { error: "Le pays de destination est requis." };
+    }
+
+    // Mise à jour optionnelle du profil étudiant
+    const fullName = formData.get('fullName') as string | null;
+    const passportNumber = formData.get('passportNumber') as string | null;
+    const diseases = formData.getAll('diseases') as string[];
+
+    const profileUpdate: Record<string, any> = {};
+    if (fullName) profileUpdate.fullName = fullName;
+    if (passportNumber) profileUpdate.passportNumber = passportNumber;
+    if (diseases.length > 0) {
+      const cleanDiseases = diseases.filter(d => d.trim() !== '');
+      if (cleanDiseases.length > 0) {
+        profileUpdate.specificDiseases = cleanDiseases.join(', ');
       }
-    });
-    
-    revalidatePath(`/admin/applications/${applicationId}`);
-    revalidatePath('/student/'); 
-    return { success: true };
+    }
+
+    if (Object.keys(profileUpdate).length > 0) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: profileUpdate,
+      });
+    }
+
+    await applicationService.createApplication(userId, country);
+    revalidatePath('/student/dashboard');
+    redirect('/student/dashboard');
   } catch (error) {
-    console.error("Nous n'arrivons pas a attribuer une universite du a::", error);
-    return { error: "Impossible d'assigner l'université" };
+    if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) {
+      throw error;
+    }
+    console.error("Application Error:", error);
+    const msg = error instanceof Error ? error.message : "Erreur lors de la création du dossier.";
+    return { error: msg };
   }
 }
 
 /**
- * Mise à jour du statut par l'Admin
+ * Assigner une université à un dossier (côté admin)
  */
-export async function updateApplicationStatusAction(id: string, status: string) {
-    try {
-        const newStatus = status as ApplicationStatus;
-        const progress = getProgressFromStatus(newStatus);
+export async function assignUniversityAction(applicationId: string, universityId: string) {
+  try {
+    await requireAdminAction(["MANAGE_STUDENTS"]);
 
-        await prisma.application.update({
-            where: { id },
-            data: { 
-                status: newStatus,
-                progress: progress 
-            }
-        });
+    await prisma.application.update({
+      where: { id: applicationId },
+      data: { universityId },
+    });
 
-        revalidatePath(`/admin/applications/${id}`);
-        revalidatePath('/admin/students');
-        revalidatePath('/student/');
-        
-        return { success: true };
-    } catch (error) {
-        console.error("Update Status Error:", error);
-        return { error: "Erreur lors de la mise à jour du statut" };
-    }
+    revalidatePath(`/admin/students`);
+    revalidatePath(`/admin/applications/${applicationId}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error("assignUniversityAction error:", error);
+    return { success: false, error: "Erreur lors de l'assignation." };
+  }
 }
 
 /**
- * Rejet d'un dossier
+ * Changer le statut d'un dossier (côté admin)
  */
-export async function rejectApplicationAction(id: string, reason: string) {
-    if (!reason || reason.trim().length < 5) {
-        return { error: "Un motif de rejet valide est requis (min. 5 caractères)." };
+export async function updateApplicationStatusAction(applicationId: string, newStatus: string) {
+  try {
+    await requireAdminAction(["MANAGE_STUDENTS"]);
+
+    // Logique métier : progression selon le statut
+    let progress = 0;
+    switch (newStatus as ApplicationStatus) {
+      case 'DRAFT': progress = 10; break;
+      case 'SUBMITTED': progress = 20; break;
+      case 'UNDER_REVIEW': progress = 40; break;
+      case 'ACCEPTED': progress = 60; break;
+      case 'JW202_RECEIVED': progress = 70; break;
+      case 'VISA_GRANTED': progress = 90; break;
+      case 'FLIGHT_BOOKED': progress = 95; break;
+      case 'COMPLETED': progress = 100; break;
+      case 'REJECTED': progress = 0; break;
     }
 
-    try {
-        await prisma.application.update({
-            where: { id },
-            data: { 
-                status: 'REJECTED' as ApplicationStatus,
-                progress: 0,
-                rejectionReason: reason 
-            }
-        });
+    await prisma.application.update({
+      where: { id: applicationId },
+      data: {
+        status: newStatus as ApplicationStatus,
+        progress,
+      },
+    });
 
-        revalidatePath(`/admin/applications/${id}`);
-        revalidatePath('/student/dashboard');
-        
-        return { success: true };
-    } catch (error) {
-        console.error("Reject Action Error:", error);
-        return { error: "Erreur lors du rejet du dossier" };
-    }
+    revalidatePath(`/admin/applications/${applicationId}`);
+    revalidatePath('/admin/students');
+    revalidatePath('/student/dashboard');
+
+    return { success: true };
+  } catch (error) {
+    console.error("updateApplicationStatusAction error:", error);
+    return { success: false, error: "Erreur lors du changement de statut." };
+  }
 }
 
 /**
- * Création d'un dossier par l'étudiant
+ * Rejeter un dossier avec un motif
  */
-export async function createApplicationAction(formData: FormData) {
-    let successId = null;
+export async function rejectApplicationAction(applicationId: string, reason: string) {
+  try {
+    await requireAdminAction(["MANAGE_STUDENTS"]);
 
-    try {
-        const userId = await authService.requireUser();
-        
-        const country = formData.get("country") as string;
-        const fullName = formData.get("fullName") as string;
-        const passportNumber = formData.get("passportNumber") as string;
+    await prisma.application.update({
+      where: { id: applicationId },
+      data: {
+        status: 'REJECTED',
+        rejectionReason: reason,
+        progress: 0,
+      },
+    });
 
-        // On recupere les frais en fonction du pays
-        const feeRecord = await prisma.feesByCountry.findUnique({
-            where: { country: country }
-        });
+    revalidatePath(`/admin/applications/${applicationId}`);
+    revalidatePath('/admin/students');
+    revalidatePath('/student/dashboard');
 
-        // Si y a pas de frais specifiques, on applique 500000 par defaut
-        const finalFee = feeRecord ? feeRecord.amount : 500000;
-        
-        const diseases = formData.getAll("diseases")
-            .map(d => d.toString().trim())
-            .filter(d => d !== "");
-
-        await prisma.$transaction(async (tx) => {
-            //  Mise à jour du profil User
-            await tx.user.update({
-                where: { id: userId },
-                data: {
-                    fullName: fullName || undefined,
-                    passportNumber: passportNumber || undefined,
-                    specificDiseases: {
-                        set: diseases 
-                    },
-                }
-            });
-
-            //  Création de l'application
-            await tx.application.create({
-                data: {
-                    userId,
-                    country, 
-                    status: 'SUBMITTED', 
-                    progress: getProgressFromStatus('SUBMITTED'), 
-                    applicationFee: finalFee
-                }
-            });
-        });
-
-        successId = userId;
-        revalidatePath('/student/dashboard');
-
-    } catch (error: any) {
-        if (error.message?.includes('NEXT_REDIRECT')) throw error;
-        console.error("Application Error:", error);
-        return { error: "Une erreur est survenue lors de l'enregistrement." };
-    }
-
-    if (successId) {
-        redirect('/student/?success=true');
-    }
+    return { success: true };
+  } catch (error) {
+    console.error("rejectApplicationAction error:", error);
+    return { success: false, error: "Erreur lors du rejet." };
+  }
 }
 
+/**
+ * Supprimer un dossier de candidature
+ */
+export async function deleteApplicationAction(applicationId: string) {
+  try {
+    if (!applicationId) return { success: false, error: "Application ID requis" };
 
-export async function deleteApplicationAction(id: string) {
-    try {
-        // Suppression du dossier
-        await prisma.application.delete({
-            where: { id }
-        });
+    await requireAdminAction(["MANAGE_STUDENTS"]);
 
-        // Rafraîchissement des données pour l'admin
-        revalidatePath("/admin/applications");
-        revalidatePath(`/admin/students`);
+    // Supprimer les messages de la conversation liée
+    const conversation = await prisma.conversation.findUnique({
+      where: { applicationId },
+    });
 
-        return { success: true };
-    } catch (error) {
-        console.error("[DELETE_APPLICATION_ERROR]", error);
-        return { 
-            success: false, 
-            error: "Impossible de supprimer le dossier. Vérifiez les dépendances (paiements liés, etc)." 
-        };
+    if (conversation) {
+      await prisma.message.deleteMany({ where: { conversationId: conversation.id } });
+      await prisma.conversationParticipant.deleteMany({ where: { conversationId: conversation.id } });
+      await prisma.conversation.delete({ where: { id: conversation.id } });
     }
+
+    // Supprimer les paiements et documents liés
+    await prisma.payment.deleteMany({ where: { applicationId } });
+    await prisma.document.deleteMany({ where: { applicationId } });
+
+    await prisma.application.delete({ where: { id: applicationId } });
+
+    revalidatePath('/admin/students');
+    return { success: true };
+  } catch (error) {
+    console.error("deleteApplicationAction error:", error);
+    return { success: false, error: "Erreur lors de la suppression." };
+  }
 }

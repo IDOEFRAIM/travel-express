@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAdminWithPermission } from "@/lib/permissions";
 
 export async function GET(req: any, context: any) {
+  const admin = await requireAdminWithPermission(["MANAGE_STUDENTS", "VIEW_STUDENTS"]);
+  if (!admin) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
+  }
+
   try {
     const params = await context.params;
     const { id } = params;
@@ -15,23 +21,21 @@ export async function GET(req: any, context: any) {
         phone: true,
         createdAt: true,
         updatedAt: true,
-        role: true,
-        passportNumber: true,    // Info indispensable
-        specificDiseases: true,  // Info médicale
-        // On récupère ses dossiers avec les paiements associés à chaque dossier
+        role: { select: { name: true } },
+        passportNumber: true,
+        specificDiseases: true,
         applications: {
           include: {
             university: {
               select: { name: true, city: true }
             },
-            payments: true, // Liste des paiements pour ce dossier spécifique
+            payments: true,
             _count: {
               select: { documents: true }
             }
           },
           orderBy: { createdAt: 'desc' }
         },
-        // Paiements globaux (au cas où certains ne sont pas encore liés à un dossier)
         payments: {
           where: { applicationId: null },
           orderBy: { createdAt: 'desc' }
@@ -39,7 +43,7 @@ export async function GET(req: any, context: any) {
       },
     });
 
-    if (!user || user.role !== "STUDENT") {
+    if (!user || user.role.name !== "STUDENT") {
       return NextResponse.json({ error: "Étudiant non trouvé" }, { status: 404 });
     }
 
@@ -51,6 +55,12 @@ export async function GET(req: any, context: any) {
 }
 
 export async function DELETE(req: any, context: any) {
+  // Seul MANAGE_STUDENTS peut supprimer
+  const adminDel = await requireAdminWithPermission(["MANAGE_STUDENTS"]);
+  if (!adminDel) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
+  }
+
   try {
     const params = await context.params;
     const { id } = params;
@@ -64,21 +74,41 @@ export async function DELETE(req: any, context: any) {
       });
       const appIds = apps.map(app => app.id);
 
-      // 2. Supprimer les documents
+      // 2. Supprimer les documents (y compris ceux vérifiés par cet user)
       if (appIds.length > 0) {
+        // Supprimer les conversations liées aux applications
+        const conversations = await tx.conversation.findMany({
+          where: { applicationId: { in: appIds } },
+          select: { id: true }
+        });
+        const convIds = conversations.map(c => c.id);
+        if (convIds.length > 0) {
+          await tx.message.deleteMany({ where: { conversationId: { in: convIds } } });
+          await tx.conversationParticipant.deleteMany({ where: { conversationId: { in: convIds } } });
+          await tx.conversation.deleteMany({ where: { id: { in: convIds } } });
+        }
         await tx.document.deleteMany({ where: { applicationId: { in: appIds } } });
       }
 
-      // 3. Supprimer les paiements (liés à l'user)
+      // 3. Supprimer les messages envoyés par l'user
+      await tx.message.deleteMany({ where: { senderId: id } });
+
+      // 4. Supprimer les participations aux conversations
+      await tx.conversationParticipant.deleteMany({ where: { userId: id } });
+
+      // 5. Supprimer les vérifications de documents (mettre à null)
+      await tx.document.updateMany({ where: { verifiedById: id }, data: { verifiedById: null } });
+
+      // 6. Supprimer les paiements (liés à l'user)
       await tx.payment.deleteMany({ where: { userId: id } });
 
-      // 4. Supprimer les logs d'activité
-      await tx.activityLog.deleteMany({ where: { adminId: id } }); // Si c'est un admin (sécurité)
+      // 7. Supprimer les logs d'activité
+      await tx.activityLog.deleteMany({ where: { adminId: id } });
 
-      // 5. Supprimer les applications
+      // 8. Supprimer les applications
       await tx.application.deleteMany({ where: { userId: id } });
 
-      // 6. Supprimer l'utilisateur
+      // 9. Supprimer l'utilisateur
       await tx.user.delete({ where: { id } });
     });
 

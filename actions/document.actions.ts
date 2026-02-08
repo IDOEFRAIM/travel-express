@@ -1,122 +1,116 @@
-'use server'
+'use server';
 
-import { authService } from "@/services/auth.service";
 import { prisma } from "@/lib/prisma";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { authService } from "@/services/auth.service";
+import { requireAdminAction } from "@/lib/permissions";
 import { revalidatePath } from "next/cache";
 import { v4 as uuidv4 } from 'uuid';
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 /**
- * ACTION : Uploader un document
- * Gère l'upload vers Supabase et l'enregistrement du chemin en BDD
+ * Upload d'un document par un étudiant
  */
 export async function uploadDocumentAction(formData: FormData) {
   try {
     const userId = await authService.requireUser();
-    
+
     const applicationId = formData.get('applicationId') as string;
-    const type = formData.get('type') as string; // ex: 'PASSPORT', 'DIPLOMA'
+    const type = formData.get('type') as string;
     const file = formData.get('file') as File;
 
-    if (!applicationId || !type || !file || file.size === 0) {
-      return { error: "Veuillez sélectionner un fichier valide." };
+    if (!applicationId || !type || !file) {
+      return { error: "Champs manquants" };
     }
 
-    // 1. Validations de sécurité
-    // Limite de taille : 5Mo
-    if (file.size > 5 * 1024 * 1024) return { error: "Fichier trop lourd (Max 5Mo)." };
+    // Vérification taille (5Mo max)
+    if (file.size > 5 * 1024 * 1024) {
+      return { error: "Fichier trop volumineux. Max 5Mo." };
+    }
 
-    // Validation du type MIME
-    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+    // Vérification MIME
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
     if (!allowedTypes.includes(file.type)) {
-      return { error: "Format non autorisé (PDF, JPG, PNG uniquement)." };
+      return { error: "Type de fichier non autorisé (PDF, JPG, PNG seulement)." };
     }
 
-    // 2. Vérification des droits d'accès
+    // Vérifier que le dossier appartient à l'utilisateur
     const app = await prisma.application.findFirst({
       where: { id: applicationId, userId },
     });
-    if (!app) return { error: "Accès refusé à ce dossier." };
+    if (!app) {
+      return { error: "Non autorisé" };
+    }
 
-    // 3. Préparation du stockage
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const extension = file.name.split('.').pop() || 'dat';
+    const extension = file.name.split('.').pop()?.toLowerCase() || 'pdf';
+    if (!['pdf', 'jpg', 'jpeg', 'png'].includes(extension)) {
+      return { error: "Extension de fichier suspecte." };
+    }
+
     const safeName = `${uuidv4()}.${extension}`;
-    
-    // Chemin hiérarchique : applications/{ID_APPLICATION}/TYPE_DOCUMENT_UUID.ext
-    const filePath = `applications/${applicationId}/${safeName}`;
+    const filePath = `documents/${safeName}`;
 
-    // 4. Upload vers le bucket Supabase "agence"
+    const buffer = Buffer.from(await file.arrayBuffer());
+
     const { error: uploadError } = await supabaseAdmin.storage
       .from('agence')
       .upload(filePath, buffer, {
         contentType: file.type,
-        upsert: true
+        upsert: true,
       });
 
     if (uploadError) {
-      console.error("Supabase Upload Error:", uploadError.message);
-      throw new Error("Erreur lors du transfert vers le stockage.");
+      console.error("Supabase upload error:", uploadError);
+      return { error: "Echec de l'upload." };
     }
 
-    // 5. Enregistrement en Base de Données
-    // On stocke le chemin relatif (filePath) pour permettre la génération d'URL signées
+    const { data: urlData } = supabaseAdmin.storage
+      .from('agence')
+      .getPublicUrl(filePath);
+
     await prisma.document.create({
       data: {
         applicationId,
         type,
-        name: file.name, 
-        url: filePath, 
+        name: file.name,
+        url: urlData.publicUrl,
         status: "PENDING",
-      }
+      },
     });
 
-    // 6. Rafraîchissement du cache Next.js
     revalidatePath('/student/dashboard');
-    revalidatePath(`/student/dashboard/${applicationId}`);
-    revalidatePath(`/admin/applications/${applicationId}`);
-    
     return { success: true };
-
-  } catch (error: any) {
-    console.error("Upload Action failed:", error);
-    return { error: "Échec de l'envoi du document. Veuillez réessayer." };
+  } catch (error) {
+    console.error("Upload failed", error);
+    return { error: "Echec de l'upload." };
   }
 }
 
 /**
- * ACTION : Vérifier un document (Admin uniquement)
- * Approuve ou rejette un document soumis
+ * Vérification d'un document par un admin qualité
  */
-export async function verifyDocumentAction(documentId: string, status: 'APPROVED' | 'REJECTED') {
+export async function verifyDocumentAction(
+  documentId: string,
+  status: 'APPROVED' | 'REJECTED',
+  comment?: string
+) {
   try {
-    const userId = await authService.requireUser();
-    
-    // Vérification du rôle admin
-    const admin = await prisma.user.findUnique({ 
-      where: { id: userId }, 
-      select: { role: true } 
-    });
-    
-    if (admin?.role !== 'ADMIN') {
-      return { error: "Action non autorisée." };
-    }
+    const admin = await requireAdminAction(["MANAGE_DOCUMENTS", "VALIDATE_DOCUMENTS"]);
 
-    // Mise à jour du statut
-    const updatedDoc = await prisma.document.update({
+    await prisma.document.update({
       where: { id: documentId },
-      data: { status },
-      include: { application: true }
+      data: {
+        status,
+        verifiedById: admin.id,
+        comment: comment || null,
+      },
     });
 
-    // Rafraîchissement des interfaces
-    revalidatePath('/admin/dashboard');
-    revalidatePath(`/admin/applications/${updatedDoc.applicationId}`);
+    revalidatePath('/admin/documents');
     revalidatePath('/student/dashboard');
 
     return { success: true };
   } catch (error) {
-    console.error("Verification Action failed:", error);
-    return { error: "Erreur lors de la mise à jour du statut." };
+    console.error("verifyDocumentAction error:", error);
+    return { error: "Impossible de vérifier le document." };
   }
 }

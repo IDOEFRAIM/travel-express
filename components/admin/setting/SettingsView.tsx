@@ -14,14 +14,16 @@ import {
 
 export function SettingsView({ user }: { user: any }) {
   const [activeTab, setActiveTab] = useState('profile');
+  
+  const isSuperAdmin = user?.role?.name === 'SUPERADMIN';
 
-  // Configuration des onglets pour le mapping
+  // Configuration des onglets - filtré par rôle
   const settingItems = [
-    { id: 'profile', label: 'Mon Profil', icon: User, section: 'account' },
-    { id: 'security', label: 'Mot de passe', icon: Lock, section: 'account' },
-    { id: 'admins', label: 'Équipe Admin', icon: Shield, section: 'admin' },
-    { id: 'fees', label: 'Frais de dossier', icon: Banknote, section: 'admin' },
-  ];
+    { id: 'profile', label: 'Mon Profil', icon: User, section: 'account', superAdminOnly: false },
+    { id: 'security', label: 'Mot de passe', icon: Lock, section: 'account', superAdminOnly: false },
+    { id: 'admins', label: 'Équipe Admin', icon: Shield, section: 'admin', superAdminOnly: true },
+    { id: 'fees', label: 'Frais de dossier', icon: Banknote, section: 'admin', superAdminOnly: true },
+  ].filter(item => !item.superAdminOnly || isSuperAdmin);
 
   useEffect(() => {
     console.log("Données utilisateur chargées:", user);
@@ -36,19 +38,23 @@ export function SettingsView({ user }: { user: any }) {
           <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Configuration</h3>
         </div>
         
-        {settingItems.map((item, index) => (
-          <div key={item.id}>
-            {/* Ajout d'un séparateur visuel entre les sections Compte et Admin */}
-            {index === 2 && <div className="h-px bg-slate-100 my-4 mx-6" />}
-            
-            <TabButton 
-              active={activeTab === item.id} 
-              onClick={() => setActiveTab(item.id)} 
-              icon={item.icon} 
-              label={item.label} 
-            />
-          </div>
-        ))}
+        {settingItems.map((item, index) => {
+          const prevSection = index > 0 ? settingItems[index - 1].section : null;
+          const showSeparator = prevSection && prevSection !== item.section;
+          
+          return (
+            <div key={item.id}>
+              {showSeparator && <div className="h-px bg-slate-100 my-4 mx-6" />}
+              
+              <TabButton 
+                active={activeTab === item.id} 
+                onClick={() => setActiveTab(item.id)} 
+                icon={item.icon} 
+                label={item.label} 
+              />
+            </div>
+          );
+        })}
       </aside>
 
       {/* CONTENT AREA */}

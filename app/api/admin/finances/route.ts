@@ -1,10 +1,18 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { requireAdminWithPermission } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
-// --- CETTE FONCTION MANQUE OU EST MAL ÉCRITE ---
 export async function GET() {
+  const admin = await requireAdminWithPermission(["MANAGE_FINANCES", "VIEW_FINANCES"]);
+  if (!admin) {
+    return NextResponse.json({ 
+      error: "Accès refusé", 
+      message: "Vous n'avez pas les permissions pour consulter les données financières." 
+    }, { status: 403 });
+  }
+
   try {
     const finances = await prisma.payment.findMany({
       orderBy: { createdAt: "desc" },
@@ -36,6 +44,11 @@ export async function GET() {
 
 // --- TON POST QUI MARCHE DÉJÀ ---
 export async function POST(req: Request) {
+  const adminPost = await requireAdminWithPermission(["MANAGE_FINANCES"]);
+  if (!adminPost) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
+  }
+
   try {
     const body = await req.json();
     const { userId, applicationId, amount, currency, method, reference } = body;

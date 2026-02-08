@@ -1,9 +1,15 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { requireAdminWithPermission } from "@/lib/permissions";
 
-export const dynamic = 'force-dynamic'; // Force la route à être dynamique
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
+  const admin = await requireAdminWithPermission(["MANAGE_STUDENTS", "VIEW_STUDENTS"]);
+  if (!admin) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
+  }
+
   try {
     const { searchParams } = new URL(req.url);
     const query = searchParams.get("q");
@@ -20,7 +26,7 @@ export async function GET(req: Request) {
           { email: { contains: query, mode: "insensitive" } },
         ],
         // On s'assure de ne pas retourner les admins dans la recherche client
-        role: "STUDENT", 
+        role: { name: "STUDENT" }, 
       },
       select: {
         id: true,

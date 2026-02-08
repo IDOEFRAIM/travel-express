@@ -12,20 +12,24 @@ export default async function AdminLayout({
   // 1. Protection : On récupère l'ID via le service d'auth
   const userId = await authService.requireUser();
 
-  // 2. On récupère les infos nécessaires
+  // 2. On récupère les infos nécessaires avec les permissions
   const user = await prisma.user.findUnique({ 
     where: { id: userId },
-    select: { role: true, fullName: true, email: true } 
+    select: { 
+      role: { select: { name: true, permissions: true } }, 
+      fullName: true, 
+      email: true 
+    } 
   });
 
-  // 3. Sécurité : Seuls les ADMINS passent
-  if (!user || user.role !== 'ADMIN') {
-    redirect('/');
+  // 3. Sécurité : Seuls les étudiants sont exclus
+  if (!user || user.role.name === 'STUDENT') {
+    redirect('/student');
   }
 
   return (
     <div className="flex min-h-screen bg-[#F4F7FE]">
-      {/* Sidebar Admin : Elle est fixe ou prend une largeur définie (ex: w-64) */}
+      {/* Sidebar Admin : filtrée par permissions */}
       <AdminSidebar user={user} />
       
       {/* Zone de contenu principale */}

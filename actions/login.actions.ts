@@ -1,67 +1,52 @@
-'use server'
+'use server';
 
-import { authService } from "@/services/auth.service"
-import { prisma } from "@/lib/prisma"
-import bcrypt from "bcryptjs"
-import { redirect } from "next/navigation"
+import { userService } from "@/services/user.service";
+import { authService } from "@/services/auth.service";
+import { redirect } from "next/navigation";
+import bcrypt from "bcryptjs";
 
 export async function loginAction(prevState: any, formData: FormData) {
-  const emailInput = formData.get('email') as string
-  const passwordInput = formData.get('password') as string
-  let targetPath = ""
+  const email = formData.get('email') as string;
+  const password = formData.get('password') as string;
 
-  if (!emailInput || !passwordInput) {
-    return { error: "Email et mot de passe requis" }
+  if (!email || !password) {
+    return { error: "Email et mot de passe requis" };
   }
-
-  // Normalisation pour éviter les erreurs de doublons
-  const email = emailInput.toLowerCase().trim();
 
   try {
-    const user = await prisma.user.findUnique({ where: { email } });
-
+    // 1. Chercher utilisateur (inclut le rôle via userService)
+    const user = await userService.findByEmail(email);
     if (!user) {
-      return { error: "Identifiants invalides" }
+      return { error: "Identifiants invalides" };
     }
 
-    // Gestion du mot de passe (Compatibilité Ancien -> Bcrypt)
-    const isBcrypt = user.password.startsWith('$2');
-    let isValid = false;
+    // 2. Vérifier le mot de passe avec bcrypt
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return { error: "Identifiants invalides" };
+    }
 
-    if (isBcrypt) {
-      isValid = await bcrypt.compare(passwordInput, user.password);
+    // 3. Récupérer le sessionVersion pour la session
+    const { prisma } = await import('@/lib/prisma');
+    const userWithVersion = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { sessionVersion: true },
+    });
+
+    // 4. Créer session avec le nom du rôle IAM et sessionVersion
+    await authService.createSession(user.id, user.role.name, userWithVersion?.sessionVersion);
+
+    // 5. Redirection selon le rôle
+    if (user.role.name === 'STUDENT') {
+      redirect('/student/dashboard');
     } else {
-      isValid = passwordInput === user.password;
-      if (isValid) {
-        // Migration automatique vers un hash sécurisé
-        const hashedPassword = await bcrypt.hash(passwordInput, 12);
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { password: hashedPassword }
-        });
-      }
+      redirect('/admin/dashboard');
     }
-
-    if (!isValid) {
-      return { error: "Identifiants invalides" }
-    }
-    
-    await authService.createSession(user.id, user.role);
-
-    targetPath = user.role === 'ADMIN' ? '/admin/dashboard' : '/student/';
-
-  } catch (error: any) {
-    // Pour que Next.js puisse gérer la redirection
-    if (error.message === 'NEXT_REDIRECT' || error.digest?.includes('NEXT_REDIRECT')) {
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) {
       throw error;
     }
-    
-    console.error("Login Error:", error)
-    return { error: "Une erreur technique est survenue" }
-  }
-
-  // Redirection sécurisée
-  if (targetPath) {
-    redirect(targetPath);
+    console.error("Login Error:", error);
+    return { error: "Une erreur est survenue" };
   }
 }

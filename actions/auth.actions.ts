@@ -1,113 +1,148 @@
-'use server'
+'use server';
 
-import { userService } from "@/services/user.service"
-import { authService } from "@/services/auth.service"
-import bcrypt from "bcryptjs"
-import { redirect } from "next/navigation"
+import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
 
 /**
- * Sécurité : on vérifie si  c'est réellement un ADMIN
+ * Déconnexion utilisateur (Server Action)
  */
-async function checkAdmin() {
-  const userId = await authService.requireUser();
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true }
-  });
-  if (!user || user.role !== 'ADMIN') {
-    throw new Error("Accès non autorisé");
-  }
-  return userId;
-}
-
-// on récupére tous les admins
-export async function getAdminsAction() {
-  await checkAdmin(); 
-  return await prisma.user.findMany({
-    where: { role: 'ADMIN' },
-    orderBy: { fullName: 'asc' }
-  });
-}
-
-// on récupére tous les étudiants pour la recherche admin
-export async function getAllUsersAction() {
-  await checkAdmin(); 
-  return await prisma.user.findMany({
-    where: { role: 'STUDENT' },
-    select: { id: true, fullName: true, email: true, role: true, createdAt: true },
-    orderBy: { createdAt: 'desc' }
-  });
-}
-
-// Changer le rôle d'un utilisateur (ADMIN <-> STUDENT)
-export async function updateUserRoleAction(userId: string, newRole: 'ADMIN' | 'STUDENT') {
+export async function logoutAction() {
   try {
-    await checkAdmin(); //Comme ca,:-) Seul un admin peut nommer un autre admin
-    
-    await prisma.user.update({
-      where: { id: userId },
-      data: { role: newRole }
-    });
-
-    revalidatePath('/admin/settings');
-    revalidatePath('/admin/students');
+    const cookieStore = await cookies();
+    cookieStore.delete('user_id');
+    cookieStore.delete('session');
     return { success: true };
-  } catch (error) {
-    return { error: "Erreur lors du changement de rôle" };
+  } catch (error: any) {
+    console.error('[logoutAction] Error:', error);
+    return { success: false, error: error?.message || 'Erreur lors de la déconnexion.' };
   }
 }
+import { userService } from "@/services/user.service";
+import { authService } from "@/services/auth.service";
+import { requireAdminAction } from "@/lib/permissions";
+import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import bcrypt from "bcryptjs";
 
+/**
+ * Inscription d'un nouvel étudiant
+ */
 export async function registerAction(prevState: any, formData: FormData) {
-  const fullName = formData.get('fullName') as string
-  const email = formData.get('email') as string
-  const phone = formData.get('phone') as string
-  const password = formData.get('password') as string
-  
-  let success = false;
-  let userId = "";
-  let userRole = "";
+  const fullName = formData.get('fullName') as string;
+  const email = formData.get('email') as string;
+  const phone = formData.get('phone') as string;
+  const password = formData.get('password') as string;
 
-  // Validation des entrées
   if (!email || !password || !fullName) {
-    return { error: "Veuillez remplir tous les champs obligatoires." }
+    return { error: "Veuillez remplir tous les champs obligatoires." };
   }
 
-  if (password.length < 8) {
-    return { error: "Le mot de passe doit faire au moins 8 caractères." }
+  if (password.length < 6) {
+    return { error: "Le mot de passe doit faire au moins 6 caractères." };
   }
 
   try {
-    // on vérifie l'existence
-    const existingUser = await userService.findByEmail(email.toLowerCase().trim())
+    const existingUser = await userService.findByEmail(email);
     if (existingUser) {
-      return { error: "Cet email est déjà utilisé." }
+      return { error: "Cet email est déjà utilisé." };
     }
 
-    // HACHAGE
-    const hashedPassword = await bcrypt.hash(password, 12)
+    // Hasher le mot de passe
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Création
-    const newUser = await userService.createStudent({ 
-      email: email.toLowerCase().trim(), 
-      password: hashedPassword, 
-      fullName, 
-      phone 
-    })
+    const newUser = await userService.createStudent({
+      email,
+      password: hashedPassword,
+      fullName,
+      phone,
+    });
 
-    userId = newUser.id;
-    userRole = newUser.role;
-    success = true;
+    // Créer session avec le nom du rôle et sessionVersion
+    await authService.createSession(newUser.id, newUser.role.name, 1);
 
+    redirect('/student');
   } catch (error) {
-    console.error("Register Error:", error)
-    return { error: "Impossible de créer le compte. Réessayez plus tard." }
+    if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) {
+      throw error;
+    }
+    console.error("Register Error:", error);
+    return { error: "Impossible de créer le compte. Réessayez." };
   }
+}
 
-  // Création de session et redirection (on le fait hors du try/catch pour éviter d'intercepter le redirect de Next.js)
-  if (success) {
-    await authService.createSession(userId, userRole as any);
-    redirect('/student/');
+/**
+ * Liste tous les admins (non-étudiants)
+ */
+export async function getAdminsAction() {
+  await requireAdminAction(["ALL_ACCESS"]);
+
+  const admins = await prisma.user.findMany({
+    where: {
+      role: { name: { not: "STUDENT" } },
+    },
+    select: {
+      id: true,
+      fullName: true,
+      email: true,
+      role: { select: { name: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return admins.map((a) => ({
+    id: a.id,
+    fullName: a.fullName,
+    email: a.email,
+    role: a.role.name,
+  }));
+}
+
+/**
+ * Liste tous les utilisateurs (pour le picker de promotion)
+ */
+export async function getAllUsersAction() {
+  await requireAdminAction(["ALL_ACCESS"]);
+
+  return prisma.user.findMany({
+    select: {
+      id: true,
+      fullName: true,
+      email: true,
+      role: { select: { name: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+/**
+ * Met à jour le rôle d'un utilisateur (promotion/destitution)
+ * Seul le SUPERADMIN peut le faire.
+ */
+export async function updateUserRoleAction(userId: string, roleName: string) {
+  try {
+    console.log("[updateUserRoleAction] Called for userId:", userId, "roleName:", roleName);
+    await requireAdminAction(["ALL_ACCESS"]);
+
+    const role = await prisma.role.findUnique({ where: { name: roleName } });
+    if (!role) {
+      console.error("[updateUserRoleAction] Rôle introuvable:", roleName);
+      return { success: false, error: "Rôle introuvable." };
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: { 
+        roleId: role.id,
+        sessionVersion: { increment: 1 }, // Invalide la session actuelle
+      },
+    });
+    console.log("[updateUserRoleAction] User updated:", updated);
+
+    revalidatePath("/admin/settings");
+    return { success: true };
+  } catch (error: any) {
+    console.error("[updateUserRoleAction] Error:", error);
+    // Retourne l'erreur détaillée côté front si possible
+    return { success: false, error: error?.message || "Impossible de modifier le rôle." };
   }
 }

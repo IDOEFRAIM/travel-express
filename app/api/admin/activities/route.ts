@@ -1,14 +1,25 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { requireAdminWithPermission } from "@/lib/permissions";
 
 export async function GET() {
-  // Récupère les 15 dernières activités (documents, candidatures, paiements...)
-  const [docs, apps, timeline] = await Promise.all([
+  // Seul ALL_ACCESS peut voir le journal d'activités complet
+  const admin = await requireAdminWithPermission(["ALL_ACCESS"]);
+  if (!admin) {
+    return NextResponse.json({ 
+      error: "Accès refusé",
+      message: "Seul l'administrateur principal (SUPERADMIN) peut consulter le journal complet des activités."
+    }, { status: 403 });
+  }
+
+  // Récupère les dernières activités (documents, candidatures, logs...)
+  const [docs, apps, activityLogs] = await Promise.all([
     prisma.document.findMany({
       orderBy: { createdAt: "desc" },
       take: 10,
       include: {
-        application: { include: { user: true } }
+        application: { include: { user: true } },
+        verifiedBy: { select: { fullName: true } }
       }
     }),
     prisma.application.findMany({
@@ -16,9 +27,10 @@ export async function GET() {
       take: 5,
       include: { user: true, university: true }
     }),
-    prisma.activity.findMany({
-      orderBy: { date: "desc" },
-      take: 15
+    prisma.activityLog.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 15,
+      include: { admin: { select: { fullName: true } } }
     })
   ]);
 
@@ -32,9 +44,9 @@ export async function GET() {
     title: doc.name,
     description:
       doc.status === "APPROVED"
-        ? `Document validé pour ${doc.application?.user?.fullName || 'un étudiant'}`
+        ? `Document validé pour ${doc.application?.user?.fullName || 'un étudiant'}${doc.verifiedBy ? ` par ${doc.verifiedBy.fullName}` : ''}`
         : doc.status === "REJECTED"
-        ? `Document rejeté pour ${doc.application?.user?.fullName || 'un étudiant'}`
+        ? `Document rejeté pour ${doc.application?.user?.fullName || 'un étudiant'}${doc.verifiedBy ? ` par ${doc.verifiedBy.fullName}` : ''}`
         : `Nouveau document soumis par ${doc.application?.user?.fullName || 'un étudiant'}`,
     date: doc.createdAt,
     user: doc.application?.user?.fullName || 'Inconnu',
@@ -58,20 +70,19 @@ export async function GET() {
     color: app.status === "SUBMITTED" ? "bg-blue-500" : "bg-blue-400",
   }));
 
-  // Mappe les activités de la timeline (paiements, suppressions...)
-  const timelineActivities = timeline.map(act => ({
-    id: act.id,
-    type: act.type,
-    title: act.title,
-    description: act.description,
-    date: act.date,
-    user: act.user,
-    color: act.color,
-    refId: act.refId,
+  // Mappe les logs d'activité admin
+  const logActivities = activityLogs.map(log => ({
+    id: log.id,
+    type: log.action,
+    title: log.action,
+    description: log.details || `Action ${log.action} sur ${log.targetType || 'ressource'}`,
+    date: log.createdAt,
+    user: log.admin?.fullName || 'Admin',
+    color: "bg-slate-500",
   }));
 
   // Fusionne et trie toutes les activités par date décroissante
-  const activities = [...docActivities, ...appActivities, ...timelineActivities].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const activities = [...docActivities, ...appActivities, ...logActivities].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return NextResponse.json({ activities });
 }

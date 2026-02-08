@@ -4,6 +4,7 @@ import "./globals.css";
 import { cookies } from "next/headers";
 import ReactQueryProvider from "./ReactQueryProvider";
 import Navbar from "@/components/Navbar";
+import AdminSidebar from "@/components/admin/AdminSidebar";
 import { prisma } from "@/lib/prisma"; // Assure-toi d'avoir cet import
 import Link from "next/link";
 import { authService } from "@/services/auth.service";
@@ -38,27 +39,32 @@ if (userId) {
   userData = await prisma.user.findUnique({
     where: { id: userId.trim() },
     select: { 
-      role: true,
+      role: { select: { name: true } },
       fullName: true 
     }
    
   })
 }
-const isAdmin = userData?.role?.toUpperCase() == 'ADMIN';
+const isAdmin = userData?.role?.name !== 'STUDENT' && userData?.role?.name != null;
 
 console.log('userdata',userData,"userid",userId)
   return (
     <html lang="fr">
+      <head>
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#db9b16" />
+</head>
+      
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
       {isAdmin? 
        <h2 className="text-2xl text-amber-300 text-center">
         <Link
         href="/admin/students"
-        >Admin:Travel Express</Link>
+        >Aller sur la page admin</Link>
       </h2>:
        <Navbar 
 isConnected={!!userId} 
-  userRole={userData?.role} 
+  userRole={userData?.role?.name} 
   userName={userData?.fullName || undefined}
         />} 
         <ReactQueryProvider>

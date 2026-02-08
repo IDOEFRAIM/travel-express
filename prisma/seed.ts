@@ -1,121 +1,150 @@
-import { PrismaClient } from '@prisma/client'
-
-import { ApplicationStatus } from '@prisma/client'
-
-enum Role {
-  ADMIN = 'ADMIN',
-  STUDENT = 'STUDENT',
-  // Add other roles if needed, matching your Prisma schema
-}
+import { PrismaClient, Permission, ApplicationStatus, PaymentStatus } from '@prisma/client'
+import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
 async function main() {
-  console.log('Start seeding...')
+  console.log('🚀 Début du seeding (Mode Test)...')
 
-  // 1. Créer des Universités
+  // --- CONFIGURATION DES MOTS DE PASSE ---
+  // On définit les mots de passe en clair ici pour les voir dans la console
+  const PWD_ADMIN = 'admin123'
+  const PWD_STAFF = 'staff123'
+  const PWD_STUDENT = 'student123'
+
+  const salt = bcrypt.genSaltSync(10)
+  const hashAdmin = bcrypt.hashSync(PWD_ADMIN, salt)
+  const hashStaff = bcrypt.hashSync(PWD_STAFF, salt)
+  const hashStudent = bcrypt.hashSync(PWD_STUDENT, salt)
+
+  // 1. Création des Rôles (IAM)
+  const roles = [
+    { name: 'SUPERADMIN', desc: 'Accès total', perms: [Permission.ALL_ACCESS] },
+    { name: 'STUDENT', desc: 'Espace étudiant', perms: [] },
+    { name: 'STUDENT_MANAGER', desc: 'Gère les dossiers', perms: [Permission.MANAGE_STUDENTS, Permission.VIEW_STUDENTS,Permission.MANAGE_DISCUSSIONS] },
+    { name: 'QUALITY_OFFICER', desc: 'Vérifie les docs', perms: [Permission.MANAGE_DOCUMENTS, Permission.VALIDATE_DOCUMENTS] },
+    { name: 'FINANCE_MANAGER', desc: 'Gère les sous', perms: [Permission.VIEW_FINANCES, Permission.MANAGE_FINANCES, Permission.VIEW_STUDENTS] },
+    { name: 'SECRETARY', desc: 'Secrétaire', perms: [Permission.MANAGE_STUDENTS, Permission.VIEW_STUDENTS, Permission.MANAGE_DOCUMENTS] },
+  ]
+
+  const createdRoles: Record<string, string> = {}
+
+  for (const r of roles) {
+    const role = await prisma.role.upsert({
+      where: { name: r.name },
+      update: { permissions: r.perms },
+      create: { name: r.name, description: r.desc, permissions: r.perms },
+    })
+    createdRoles[r.name] = role.id
+  }
+
+  // 2. Création des Universités
   const uni1 = await prisma.university.create({
     data: {
       name: 'Beijing Language and Culture University (BLCU)',
       city: 'Pékin',
-      description: 'La meilleure université pour apprendre le chinois. Campus international.',
-      costRange: '3000-4500 USD/an',
-      programs: 'Licence Chinois, Master Traduction, Cours de langue (1 an)',
-      imageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80',
+      summary: 'Spécialiste Langues',
+      costRange: '3000-4500 USD',
+      imageUrl: 'https://images.unsplash.com/photo-1541339907198-e08756defeec',
     },
   })
 
-  const uni2 = await prisma.university.create({
-    data: {
-      name: 'Wuhan University',
-      city: 'Wuhan',
-      description: 'Une des plus belles universités de Chine. Très forte en médecine et ingénierie.',
-      costRange: '2500-4000 USD/an',
-      programs: 'Médecine (MBBS), Génie Civil, Informatique',
-      imageUrl: 'https://images.unsplash.com/photo-1541339907198-e08756defeec?auto=format&fit=crop&w=800&q=80',
-    },
-  })
-
-  // 2. Créer un Admin
-  const admin = await prisma.user.upsert({
+  // 3. Création des Utilisateurs
+  // ADMIN
+  await prisma.user.upsert({
     where: { email: 'admin@agence.com' },
-    update: {},
+    update: { password: hashAdmin },
     create: {
       email: 'admin@agence.com',
-      password: 'securepassword', // En vrai, il faudrait le hasher (bcrypt)
-      fullName: 'Admin Principal',
-      role: Role.ADMIN,
+      password: hashAdmin,
+      fullName: 'Super Administrateur',
+      roleId: createdRoles['SUPERADMIN'],
     },
   })
 
-  // 3. Créer un Étudiant
-  const student = await prisma.user.upsert({
+  // QUALITY OFFICER
+  await prisma.user.upsert({
+    where: { email: 'qualite@agence.com' },
+    update: { password: hashStaff },
+    create: {
+      email: 'qualite@agence.com',
+      password: hashStaff,
+      fullName: 'Agent Qualité',
+      roleId: createdRoles['QUALITY_OFFICER'],
+    },
+  })
+
+  // STUDENT_MANAGER
+  await prisma.user.upsert({
+    where: { email: 'student_manager@gmail.com' },
+    update: { password: hashStaff },
+    create: {
+      email: 'student_manager@gmail.com',
+      password: hashStaff,
+      fullName: 'Student Manager',
+      roleId: createdRoles['STUDENT_MANAGER'],
+    },
+  })
+
+  // SECRETARY
+  await prisma.user.upsert({
+    where: { email: 'secretaire@gmail.com' },
+    update: { password: hashStaff },
+    create: {
+      email: 'secretaire@gmail.com',
+      password: hashStaff,
+      fullName: 'Secrétaire',
+      roleId: createdRoles['SECRETARY'],
+    },
+  })
+
+  // ÉTUDIANT DE TEST
+  const testStudent = await prisma.user.upsert({
     where: { email: 'etudiant@test.com' },
-    update: {},
+    update: { password: hashStudent },
     create: {
       email: 'etudiant@test.com',
-      password: 'password123',
+      password: hashStudent,
       fullName: 'Ouedraogo Jean',
-      phone: '+226 70 00 00 00',
-      role: Role.STUDENT,
+      roleId: createdRoles['STUDENT'],
     },
   })
 
-  // 4. Créer un Dossier de candidature pour l'étudiant
+  // 4. Dossier et Conversation pour l'étudiant
   const app = await prisma.application.create({
     data: {
-      userId: student.id,
+      userId: testStudent.id,
       universityId: uni1.id,
-      desiredProgram: 'Cours de langue (1 an)',
-      status: ApplicationStatus.JW202_RECEIVED, // Avancé pour voir la barre de progression
-      progress: 60,
-    },
+      status: ApplicationStatus.UNDER_REVIEW,
+      progress: 30,
+      paymentStatus: PaymentStatus.PENDING,
+    }
   })
 
-  // 5. DATA GENERATION FOR DASHBOARD DEMO
-  console.log("Generating extra data for dashboard...");
+  await prisma.conversation.create({
+    data: {
+      applicationId: app.id,
+      subject: "Suivi de dossier",
+      participants: { create: [{ userId: testStudent.id }] }
+    }
+  })
+
+  // --- AFFICHAGE FINAL ---
+  console.log('\n' + '='.repeat(50))
+  console.log('✅ SEEDING TERMINÉ AVEC SUCCÈS');
+  console.log('='.repeat(50))
+  console.log('UTILISEZ CES COMPTES POUR VOS TESTS :');
   
-  const statuses = [
-    ApplicationStatus.DRAFT, 
-    ApplicationStatus.SUBMITTED, 
-    ApplicationStatus.UNDER_REVIEW, 
-    ApplicationStatus.ACCEPTED, 
-    ApplicationStatus.VISA_GRANTED
-  ];
-
-  for (let i = 1; i <= 10; i++) {
-     const email = `student${i}@test.com`;
-     const s = await prisma.user.upsert({
-        where: { email },
-        update: {},
-        create: {
-          email,
-          password: 'password123',
-          fullName: `Etudiant Test ${i}`,
-          role: Role.STUDENT,
-        }
-     });
-
-     // Create application
-     await prisma.application.create({
-        data: {
-           userId: s.id,
-           universityId: i % 2 === 0 ? uni2.id : uni1.id,
-           desiredProgram: i % 2 === 0 ? 'Médecine' : 'Licence Chinois',
-           status: statuses[i % statuses.length],
-           createdAt: new Date(Date.now() - Math.floor(Math.random() * 1000000000))
-        }
-     });
-  }
-
-  console.log({ uni1, uni2, admin, student, app })
-  console.log('Seeding finished.')
+  console.table([
+    { Rôle: 'SuperAdmin', Email: 'admin@agence.com', Password: PWD_ADMIN },
+    { Rôle: 'Qualité', Email: 'qualite@agence.com', Password: PWD_STAFF },
+    { Rôle: 'Étudiant', Email: 'etudiant@test.com', Password: PWD_STUDENT },
+  ])
+  console.log('='.repeat(50) + '\n')
 }
 
 main()
-  .then(async () => {
-    await prisma.$disconnect()
-  })
+  .then(async () => { await prisma.$disconnect() })
   .catch(async (e) => {
     console.error(e)
     await prisma.$disconnect()

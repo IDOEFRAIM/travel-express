@@ -1,7 +1,14 @@
 // app/api/admin/payments/by-application/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAdminWithPermission } from "@/lib/permissions";
+
 export async function GET(req: any) {
+  const admin = await requireAdminWithPermission(["VIEW_FINANCES", "MANAGE_FINANCES", "MANAGE_STUDENTS"]);
+  if (!admin) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
+  }
+
   const { searchParams } = new URL(req.url);
   const applicationId = searchParams.get("applicationId");
 

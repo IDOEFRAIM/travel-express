@@ -1,12 +1,18 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { requireAdminWithPermission } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(
   req: Request,
-  { params }: { params: Promise<{ id: string }> } // On définit params comme une Promise
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const admin = await requireAdminWithPermission(["MANAGE_STUDENTS", "VIEW_STUDENTS"]);
+  if (!admin) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
+  }
+
   try {
     // 1. IL FAUT ATTENDRE LES PARAMS ICI
     const resolvedParams = await params; 

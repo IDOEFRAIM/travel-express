@@ -30,7 +30,7 @@ export async function proxy(request: NextRequest) {
             const role = payload.role as string;
 
             // PROTECTION DES RÔLES : Un étudiant ne va pas en Admin
-            if (path.startsWith('/admin') && role !== 'ADMIN') {
+            if (path.startsWith('/admin') && role === 'STUDENT') {
                 return NextResponse.redirect(new URL('/student/dashboard', request.url));
             }
         } catch (error) {

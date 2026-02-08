@@ -1,94 +1,72 @@
 'use server';
 
 import { prisma } from "@/lib/prisma";
+import { requireAdminAction } from "@/lib/permissions";
 import { revalidatePath } from "next/cache";
-import { authService } from "@/services/auth.service";
 
 /**
- * Sécurité : Seul un admin peut gérer les frais
+ * Récupère tous les frais par pays
  */
-async function checkAdmin() {
-  const userId = await authService.requireUser();
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true }
-  });
-  if (!user || user.role !== 'ADMIN') throw new Error("Non autorisé");
-}
-
 export async function getFeesAction() {
-  // On autorise la lecture pour que l'étudiant puisse voir les tarifs
-  return await prisma.feesByCountry.findMany({
-    orderBy: { country: 'asc' }
+  await requireAdminAction(["MANAGE_FINANCES"]);
+
+  const fees = await prisma.feesByCountry.findMany({
+    orderBy: { country: 'asc' },
   });
+
+  return fees;
 }
 
+/**
+ * Créer ou mettre à jour des frais par pays
+ * FormData : id (optionnel), country, amount
+ */
 export async function updateFeeAction(formData: FormData) {
+  await requireAdminAction(["MANAGE_FINANCES"]);
+
+  const id = formData.get('id') as string | null;
+  const country = formData.get('country') as string;
+  const amount = parseFloat(formData.get('amount') as string);
+
+  if (!country || isNaN(amount)) {
+    return { success: false, error: "Pays et montant sont requis." };
+  }
+
   try {
-    await checkAdmin();
-
-    const id = formData.get('id') as string | null;
-    const country = formData.get('country') as string;
-    const amountStr = formData.get('amount') as string;
-    const amount = parseInt(amountStr, 10);
-
-    if (!country || isNaN(amount)) {
-      return { success: false, error: "Données invalides." };
-    }
-
-    const countryName = country.trim();
-
-    // 1. Mise à jour ou Création dans la table de configuration (FeesByCountry)
     if (id) {
       await prisma.feesByCountry.update({
         where: { id },
-        data: { country: countryName, amount }
+        data: { country, amount },
       });
     } else {
-      await prisma.feesByCountry.upsert({
-        where: { country: countryName },
-        update: { amount },
-        create: { country: countryName, amount }
+      await prisma.feesByCountry.create({
+        data: { country, amount },
       });
     }
 
-    // 2. RÉPARATION DES APPLICATIONS EXISTANTES
-    // On met à jour toutes les applications de ce pays qui ont encore le prix fallback
-    await prisma.application.updateMany({
-      where: {
-        country: {
-      equals: countryName,
-      mode: 'insensitive', // Ignore la différence entre 'Chine' et 'CHINE'
-    },
-     
-      },
-      data: {
-        applicationFee: amount // On injecte le nouveau prix réel
-      }
-    });
-
     revalidatePath('/admin/settings');
-    // On revalide aussi la page des applications pour que l'admin voie le changement
-    revalidatePath('/admin/applications'); 
-
     return { success: true };
-  } catch (error: any) {
-    console.error("Erreur updateFeeAction:", error);
-    return { success: false, error: "Erreur lors de la mise à jour." };
+  } catch (error) {
+    console.error("updateFeeAction error:", error);
+    return { success: false, error: "Impossible de sauvegarder les frais." };
   }
 }
 
-export async function deleteFeeAction(id: string) {
-  try {
-    await checkAdmin();
+/**
+ * Supprimer des frais par pays
+ */
+export async function deleteFeeAction(feeId: string) {
+  await requireAdminAction(["MANAGE_FINANCES"]);
 
-    await prisma.feesByCountry.delete({ 
-      where: { id } 
+  try {
+    await prisma.feesByCountry.delete({
+      where: { id: feeId },
     });
 
     revalidatePath('/admin/settings');
     return { success: true };
   } catch (error) {
-    return { success: false, error: "Erreur lors de la suppression." };
+    console.error("deleteFeeAction error:", error);
+    return { success: false, error: "Impossible de supprimer les frais." };
   }
 }

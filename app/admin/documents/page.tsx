@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import {prisma} from "@/lib/prisma";
 import { DocumentActions } from "@/components/admin/DocumentActions"; 
 import Link from "next/link";
-import { FileText, Search, Filter, Download } from "lucide-react";
+import { FileText, Search, Filter, Download, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { getFileUrl } from "@/lib/storage";
 import { useEffect, useState } from "react";
@@ -32,8 +32,33 @@ export default function AdminDocumentsPage() {
     fetchUrls();
   }, [documents]);
 
-  if (isLoading) return <div>Chargement...</div>;
-  if (error) return <div>Erreur lors du chargement des documents.</div>;
+  if (isLoading) return <div className="p-12 text-center font-black text-[#db9b16] animate-pulse uppercase italic tracking-widest text-xs">Chargement des documents...</div>;
+  
+  if (error) {
+    const isForbidden = axios.isAxiosError(error) && error.response?.status === 403;
+    const errorMessage = isForbidden 
+      ? error.response?.data?.message || "Vous n'avez pas la permission de gérer les documents." 
+      : "Erreur lors du chargement des documents.";
+
+    return (
+      <div className="p-12 flex flex-col items-center justify-center text-center h-[60vh]">
+        <div className="w-20 h-20 bg-red-50 text-red-500 rounded-[2rem] flex items-center justify-center mb-6 shadow-xl shadow-red-500/10">
+          <ShieldAlert size={40} />
+        </div>
+        <h2 className="text-3xl font-black text-slate-950 uppercase italic tracking-tighter mb-4">
+          {isForbidden ? "Accès Restreint" : "Oups !"}
+        </h2>
+        <p className="text-slate-500 max-w-lg mb-10 font-medium leading-relaxed">
+          {errorMessage}
+        </p>
+        <Link href="/admin/dashboard">
+          <Button className="bg-slate-950 text-white rounded-2xl px-10 py-6 font-black uppercase text-xs tracking-widest hover:bg-[#db9b16] transition-all">
+            Retour
+          </Button>
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <main className="p-8 md:p-12">

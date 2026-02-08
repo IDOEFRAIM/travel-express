@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma"
-import { Role, User, Prisma } from "@prisma/client"
 
 export const userService = {
   /**
@@ -9,22 +8,24 @@ export const userService = {
     if (!email) return null;
     return prisma.user.findUnique({
       where: { email: email.toLowerCase().trim() },
+      include: { role: true },
     });
   },
 
   /**
    * Crée un étudiant avec gestion des types Prisma
-   * Utilisation de Prisma.UserCreateInput pour plus de flexibilité
+   * On connecte le rôle "STUDENT" par son nom unique
    */
   async createStudent(data: { email: string; password: string; fullName: string; phone?: string | null }) {
     return prisma.user.create({
       data: {
         email: data.email.toLowerCase().trim(),
-        password: data.password, // Le hashage doit être fait avant d'appeler ce service
+        password: data.password,
         fullName: data.fullName.trim(),
         phone: data.phone,
-        role: Role.STUDENT,
+        role: { connect: { name: 'STUDENT' } },
       },
+      include: { role: true },
     });
   },
   
@@ -40,7 +41,7 @@ export const userService = {
         email: true,
         fullName: true,
         phone: true,
-        role: true,
+        role: { select: { name: true } },
         createdAt: true,
         applications: {
           include: { 
@@ -64,7 +65,7 @@ export const userService = {
    */
   async getAllStudents() {
     return prisma.user.findMany({
-      where: { role: Role.STUDENT },
+      where: { role: { name: 'STUDENT' } },
       select: {
         id: true,
         fullName: true,

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAdminWithPermission } from "@/lib/permissions";
 
 export async function GET(
   req: Request,
@@ -53,6 +54,11 @@ export async function PUT(
     req: Request,
     { params }: { params: Promise<{ id: string }> }
 ): Promise<Response> {
+    const adminPut = await requireAdminWithPermission(["MANAGE_FINANCES"]);
+    if (!adminPut) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
+    }
+
     try {
         const { id } = await params;
         const {

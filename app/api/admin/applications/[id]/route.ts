@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAdminWithPermission } from "@/lib/permissions";
 
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> } // Type sécurisé pour Next.js 15
 ) {
   const { id } = await params;
+
+  const admin = await requireAdminWithPermission(["MANAGE_STUDENTS", "VIEW_STUDENTS", "MANAGE_DOCUMENTS"]);
+  if (!admin) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
+  }
 
   try {
     const application = await prisma.application.findUnique({
@@ -40,8 +46,8 @@ export async function GET(
     }
 
     /* Note technique : 
-      Les champs 'country', 'passportNumber' et 'medicalHistory' (si présents dans la table Application)
-      sont automatiquement inclus ici car ce sont des colonnes directes du modèle.
+      Les champs 'passportNumber' et 'medicalHistory' sont sur le modèle User (pas Application).
+      Ils sont accessibles via application.user.passportNumber etc.
     */
 
     return NextResponse.json({ application });
